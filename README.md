@@ -1,20 +1,22 @@
-# ⚡ MotorGuard AI: Industrial Predictive Maintenance & Prognostics
-### Advanced Induction Motor Condition-Monitoring System (Intermediate Engineering Level)
+# ⚡ MotorGuard AI: Industrial IoT Predictive Maintenance & Prognostics
+### Industrial Induction Motor Condition-Monitoring Suite (B.Tech Final Year Capstone Project)
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Deploy-10b981?logo=github&logoColor=white)](https://pages.github.com/)
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](index.html)
 [![CSS3](https://img.shields.io/badge/CSS3-Dark%20Mode-1572B6?logo=css3&logoColor=white)](style.css)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?logo=javascript&logoColor=black)](app.js)
 [![Chart.js](https://img.shields.io/badge/Chart.js-4.4+-FF6384?logo=chart.js&logoColor=white)](https://www.chartjs.org/)
-[![Engineering Level](https://img.shields.io/badge/Level-Intermediate%20B.Tech-38bdf8)](index.html)
+[![Engineering Level](https://img.shields.io/badge/Level-Final%20Year%20Capstone-38bdf8)](index.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-An industrial **Dark Mode** predictive maintenance and prognostics web suite designed specifically for **GitHub Pages deployment**. It evaluates 5 core induction motor parameters (**Vibration, Temperature, Current, Voltage, Speed**) using:
-- **ISO 13373-1 Fast Fourier Transform (FFT) Frequency Spectrum** for harmonic fault identification (1X, 2X, 3X, BPFO, BPFI)
-- **Weibull Remaining Useful Life (RUL)** prognostics and Health Index (HI %) degradation curves with 95% confidence bounds
-- **Multi-Model ML Benchmarks** (Hybrid Isolation Forest + Autoencoder + SVM) with interactive 3×3 Confusion Matrix
-- **ISO 10816-3 Vibration Severity Classification** for Group 2 medium industrial motors
-- **Interactive Manual Sensor Simulator** with real-time AI diagnostic inference and SCADA dials injection.
+An enterprise-grade **Dark Mode** industrial predictive maintenance and prognostics web suite with a **Left Sidebar Multi-View Navigation Menu**, designed specifically for **GitHub Pages deployment**. It monitors and predicts motor degradation across 5 core channels (**Vibration, Temperature, Current, Voltage, Speed**) using:
+- **Sleek Left Sidebar Navigation Menu:** 11 operational views with live motor status widget, system uptime counter, and mobile responsive drawer.
+- **ISO 13373-1 Fast Fourier Transform (FFT) Frequency Spectrum:** Real-time harmonic breakdown (1X, 2X, 3X, BPFO, BPFI) for bearing race and shaft misalignment detection.
+- **Weibull Remaining Useful Life (RUL) Prognostics:** Health Index degradation curves (100% to 0% HI) with 95% confidence bounds and hours-to-failure prediction.
+- **Maintenance Economics & Financial ROI Calculator:** Quantified cost-benefit comparison between corrective breakdowns ($13,700) and predictive AI interventions ($850) with interactive facility sliders.
+- **Digital Twin Subsystems:** Live real-time health progress bars for Stator Insulation, Bearings Assembly, Rotor Air Gap, and 3-Phase Electrical Supply.
+- **Multi-Model ML Benchmarks:** Hybrid Ensemble (98.4% Acc, 0.991 ROC-AUC), Autoencoder Neural Network, and Support Vector Machine with 3×3 Confusion Matrix.
+- **Interactive Manual Sensor Studio:** Dual-bound sliders for custom parameter testing, instant AI diagnosis, and live SCADA injection.
 
 ---
 

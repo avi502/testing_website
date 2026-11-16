@@ -18,53 +18,161 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark-mode">
-  <!-- TOP INDUSTRIAL NAVIGATION BAR -->
-  <header class="app-header">
-    <div class="header-left">
-      <div class="brand-logo">
-        <span class="brand-icon">⚡</span>
-        <div>
-          <h1 class="brand-name">MotorGuard<span class="brand-accent">.AI</span></h1>
-          <p class="brand-tagline">Industrial Predictive Maintenance &amp; Prognostics (Intermediate Engineering Level)</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="header-center">
-      <div class="system-status-pill">
-        <span class="status-pulse"></span>
-        <span id="liveStatusText">TELEMETRY STREAM: ACTIVE (1Hz)</span>
-      </div>
-    </div>
-
-    <div class="header-right">
-      <div class="header-controls">
-        <button id="toggleStreamBtn" class="btn btn-secondary">
-          <span id="streamBtnIcon">⏸</span> <span id="streamBtnText">Pause</span>
-        </button>
-        <div class="dropdown-faults">
-          <button class="btn btn-primary" id="faultDropdownBtn">
-            <span>⚠️ Inject Fault</span> ▼
-          </button>
-          <div class="dropdown-menu" id="faultMenu">
-            <button class="dropdown-item" data-fault="normal">🟢 Normal Baseline</button>
-            <button class="dropdown-item" data-fault="bearing">🔴 Bearing Damage (High Vibration)</button>
-            <button class="dropdown-item" data-fault="thermal">🟡 Thermal Overheating (95°C)</button>
-            <button class="dropdown-item" data-fault="electrical">🔴 Electrical Overload (Voltage Dip / Surge Current)</button>
+  <div class="app-layout">
+    <!-- LEFT SIDEBAR TAB MENU (FINAL YEAR CAPSTONE) -->
+    <aside class="app-sidebar" id="appSidebar">
+      <!-- Sidebar Brand & Capstone Tag -->
+      <div class="sidebar-brand-box">
+        <div class="sidebar-brand-title">
+          <span class="brand-icon">⚡</span>
+          <div>
+            <h2 class="sidebar-brand-name">MotorGuard<span class="brand-accent">.AI</span></h2>
+            <span class="capstone-badge">FINAL YEAR CAPSTONE</span>
           </div>
         </div>
-        <button id="downloadCsvBtn" class="btn btn-accent">
-          <span>📥 Export CSV</span>
-        </button>
       </div>
-    </div>
-  </header>
 
-  <!-- MAIN DASHBOARD CONTENT -->
-  <main class="dashboard-container">
+      <!-- Active Motor Identity & Live Health State -->
+      <div class="sidebar-motor-widget">
+        <div class="motor-avatar-box">
+          <span class="motor-avatar-icon">⚙️</span>
+          <span class="sidebar-pulse-dot dot-green" id="sidebarPulseDot"></span>
+        </div>
+        <div class="motor-meta-box">
+          <div class="motor-id-title">Induction Motor #01</div>
+          <div class="motor-specs-sub">7.5 kW &bull; 400V 50Hz</div>
+          <div class="motor-health-tag" id="sidebarHealthTag">HEALTHY (ZONE A)</div>
+        </div>
+      </div>
+
+      <!-- Navigation Menu Options -->
+      <div class="sidebar-nav-scroll">
+        <nav class="sidebar-nav">
+          <div class="nav-section-title">CORE SCADA MONITORING</div>
+          <button type="button" class="sidebar-tab-link active" data-target="kpiGrid">
+            <span class="tab-icon">📊</span>
+            <span class="tab-label">Telemetry Overview</span>
+            <span class="tab-live-badge">Live</span>
+          </button>
+          <button type="button" class="sidebar-tab-link" data-target="scadaDialsPanel">
+            <span class="tab-icon">🧭</span>
+            <span class="tab-label">SCADA Radial Gauges</span>
+          </button>
+          <button type="button" class="sidebar-tab-link" data-target="telemetryChartsPanel">
+            <span class="tab-icon">📈</span>
+            <span class="tab-label">Dynamic Trend Splines</span>
+          </button>
+          <button type="button" class="sidebar-tab-link" data-target="analyticsPanel">
+            <span class="tab-icon">🎯</span>
+            <span class="tab-label">PCA &amp; Pearson Matrix</span>
+          </button>
+
+          <div class="nav-section-title">AI &amp; ADVANCED PROGNOSTICS</div>
+          <button type="button" class="sidebar-tab-link" data-target="manualPredictPanel">
+            <span class="tab-icon">🎛️</span>
+            <span class="tab-label">Manual Fault Simulator</span>
+          </button>
+          <button type="button" class="sidebar-tab-link" data-target="intermediateSuitePanel" data-subtab="tabFft">
+            <span class="tab-icon">🔬</span>
+            <span class="tab-label">FFT Frequency Spectrum</span>
+          </button>
+          <button type="button" class="sidebar-tab-link" data-target="intermediateSuitePanel" data-subtab="tabRul">
+            <span class="tab-icon">⏳</span>
+            <span class="tab-label">Remaining Useful Life (RUL)</span>
+          </button>
+          <button type="button" class="sidebar-tab-link" data-target="intermediateSuitePanel" data-subtab="tabModels">
+            <span class="tab-icon">🧠</span>
+            <span class="tab-label">AI Model Benchmarks</span>
+          </button>
+
+          <div class="nav-section-title">ENGINEERING &amp; CAPSTONE</div>
+          <button type="button" class="sidebar-tab-link" data-target="intermediateSuitePanel" data-subtab="tabSpecs">
+            <span class="tab-icon">🏷️</span>
+            <span class="tab-label">Digital Twin &amp; ISO Specs</span>
+          </button>
+          <button type="button" class="sidebar-tab-link" data-target="economicsPanel">
+            <span class="tab-icon">💰</span>
+            <span class="tab-label">Maintenance ROI &amp; Costs</span>
+            <span class="tab-new-badge">ROI</span>
+          </button>
+          <button type="button" class="sidebar-tab-link" data-target="auditTablePanel">
+            <span class="tab-icon">📋</span>
+            <span class="tab-label">Audit Log &amp; Diagnostics</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Sidebar Sticky Bottom Meta -->
+      <div class="sidebar-bottom-meta">
+        <div class="sb-meta-row">
+          <span class="sb-meta-k">SYSTEM UPTIME:</span>
+          <span class="sb-meta-v" id="sidebarUptime">00:00:00</span>
+        </div>
+        <div class="sb-meta-row">
+          <span class="sb-meta-k">ARCHITECTURE:</span>
+          <span class="sb-meta-v">Edge IoT / Web Worker</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Drawer Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- MAIN APPLICATION WRAPPER -->
+    <div class="app-main">
+      <!-- TOP INDUSTRIAL NAVIGATION BAR -->
+      <header class="app-header">
+        <div class="header-left">
+          <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Toggle Navigation Menu">
+            <span>☰</span>
+          </button>
+          <div class="brand-logo">
+            <span class="brand-icon">⚡</span>
+            <div>
+              <h1 class="brand-name">MotorGuard<span class="brand-accent">.AI</span></h1>
+              <p class="brand-tagline">Industrial IoT Predictive Maintenance &amp; Prognostics (Final Year Capstone Project)</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-center">
+          <div class="system-status-pill">
+            <span class="status-pulse"></span>
+            <span id="liveStatusText">TELEMETRY STREAM: ACTIVE (1Hz)</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="header-controls">
+            <button id="toggleStreamBtn" class="btn btn-secondary">
+              <span id="streamBtnIcon">⏸</span> <span id="streamBtnText">Pause</span>
+            </button>
+            <div class="dropdown-faults">
+              <button class="btn btn-primary" id="faultDropdownBtn">
+                <span>⚠️ Inject Fault</span> ▼
+              </button>
+              <div class="dropdown-menu" id="faultMenu">
+                <button class="dropdown-item" data-fault="normal">🟢 Normal Baseline</button>
+                <button class="dropdown-item" data-fault="bearing">🔴 Bearing Damage (High Vibration)</button>
+                <button class="dropdown-item" data-fault="thermal">🟡 Thermal Overheating (95°C)</button>
+                <button class="dropdown-item" data-fault="electrical">🔴 Electrical Overload (Voltage Dip / Surge Current)</button>
+              </div>
+            </div>
+            <button id="downloadCsvBtn" class="btn btn-accent">
+              <span>📥 Export CSV</span>
+            </button>
+            <button id="printReportBtn" class="btn btn-secondary">
+              <span>🖨️ PDF Report</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- MAIN DASHBOARD CONTENT -->
+      <main class="dashboard-container">
     
     <!-- TOP STATUS KPI METRIC CARDS -->
-    <section class="kpi-grid">
+    <section class="kpi-grid" id="kpiGrid">
       <div class="kpi-card">
         <div class="kpi-label">Total Readings</div>
         <div class="kpi-value" id="kpiTotal">0</div>
@@ -99,7 +207,7 @@
     </section>
 
     <!-- SECTION 1: SCADA RADIAL DIAL INSTRUMENTS -->
-    <section class="dashboard-panel">
+    <section class="dashboard-panel" id="scadaDialsPanel">
       <div class="panel-header">
         <div>
           <h2 class="panel-title">🧭 Real-Time SCADA Dial Instruments</h2>
@@ -205,7 +313,7 @@
     </section>
 
     <!-- SECTION 2: TELEMETRY CHARTS -->
-    <section class="two-col-grid">
+    <section class="two-col-grid" id="telemetryChartsPanel">
       <!-- Left: Time Series Sensor Trajectory -->
       <div class="dashboard-panel">
         <div class="panel-header">
@@ -242,7 +350,7 @@
     </section>
 
     <!-- SECTION 3: ML ANALYTICS (PCA & CORRELATION) -->
-    <section class="two-col-grid">
+    <section class="two-col-grid" id="analyticsPanel">
       <!-- Left: PCA 2D Scatter Plot -->
       <div class="dashboard-panel">
         <div class="panel-header">
@@ -734,6 +842,56 @@
 
       <!-- Tab 4: Motor Nameplate Technical Specs & ISO Standards -->
       <div class="suite-tab-pane" id="tabSpecs" style="display: none;">
+        <!-- Digital Twin Subsystem Health Integrity Bar Grid -->
+        <div class="twin-subsystems-card">
+          <h4 class="diagnostics-header">⚙️ Digital Twin Subsystem Health Integrity (Real-Time Physics Model)</h4>
+          <div class="subsystems-grid">
+            <div class="subsystem-box" id="subsystemStator">
+              <div class="ss-head">
+                <span class="ss-title">Stator &amp; Winding Insulation</span>
+                <span class="ss-pct text-healthy" id="pctStator">98.5%</span>
+              </div>
+              <div class="comp-track">
+                <div class="comp-fill comp-fill-green" id="barStator" style="width: 98.5%;"></div>
+              </div>
+              <div class="ss-desc" id="descStator">Thermal rise &le;75°C (Class B optimal). No thermal breakdown.</div>
+            </div>
+
+            <div class="subsystem-box" id="subsystemBearings">
+              <div class="ss-head">
+                <span class="ss-title">Bearings &amp; Mechanical Coupling</span>
+                <span class="ss-pct text-healthy" id="pctBearings">96.2%</span>
+              </div>
+              <div class="comp-track">
+                <div class="comp-fill comp-fill-green" id="barBearings" style="width: 96.2%;"></div>
+              </div>
+              <div class="ss-desc" id="descBearings">Vibration 2.1 mm/s (ISO Zone A). BPFO/BPFI raceways intact.</div>
+            </div>
+
+            <div class="subsystem-box" id="subsystemRotor">
+              <div class="ss-head">
+                <span class="ss-title">Rotor Dynamic Balance &amp; Air Gap</span>
+                <span class="ss-pct text-healthy" id="pctRotor">99.1%</span>
+              </div>
+              <div class="comp-track">
+                <div class="comp-fill comp-fill-green" id="barRotor" style="width: 99.1%;"></div>
+              </div>
+              <div class="ss-desc" id="descRotor">Synchronous slip 1.67% (1475 RPM). Uniform rotational air gap.</div>
+            </div>
+
+            <div class="subsystem-box" id="subsystemElectrical">
+              <div class="ss-head">
+                <span class="ss-title">3-Phase Power &amp; Magnetic Flux</span>
+                <span class="ss-pct text-healthy" id="pctElectrical">97.8%</span>
+              </div>
+              <div class="comp-track">
+                <div class="comp-fill comp-fill-green" id="barElectrical" style="width: 97.8%;"></div>
+              </div>
+              <div class="ss-desc" id="descElectrical">Line voltage 400V balanced. Current load 9.8A within 15A rating.</div>
+            </div>
+          </div>
+        </div>
+
         <div class="specs-layout">
           <!-- Industrial Motor Rating Nameplate -->
           <div class="nameplate-card">
@@ -842,12 +1000,130 @@
       </div>
     </section>
 
-    <!-- SECTION 6: TELEMETRY AUDIT TABLE -->
-    <section class="dashboard-panel">
+    <!-- SECTION 6: MAINTENANCE ECONOMICS, MTBF & ROI FINANCIAL CALCULATOR (FINAL YEAR CAPSTONE) -->
+    <section class="dashboard-panel" id="economicsPanel">
       <div class="panel-header">
         <div>
-          <h2 class="panel-title">📋 Telemetry Audit Log & Diagnosis</h2>
-          <p class="panel-subtitle">Searchable real-time records with automated health classifications</p>
+          <div class="panel-header-badge-row">
+            <h2 class="panel-title">💰 Industrial Maintenance Economics &amp; ROI Calculator</h2>
+            <span class="badge-pill badge-primary">CAPSTONE FEATURE</span>
+          </div>
+          <p class="panel-subtitle">Financial cost-benefit quantification: Run-to-Failure (Corrective) vs. MotorGuard AI (Condition-Based Maintenance)</p>
+        </div>
+        <div class="legend-pills">
+          <span class="pill-dot dot-red"></span> Breakdown: $13,700
+          <span class="pill-dot dot-green"></span> Planned AI Fix: $850
+        </div>
+      </div>
+
+      <div class="economics-layout">
+        <!-- 4 ROI Metric KPI Cards -->
+        <div class="economics-kpis-grid">
+          <div class="roi-kpi-card">
+            <span class="roi-kpi-label">ESTIMATED NET ANNUAL SAVINGS</span>
+            <div class="roi-kpi-val text-healthy" id="roiAnnualSavings">$48,500</div>
+            <div class="roi-kpi-sub">Based on 4 prevented breakdowns / year</div>
+          </div>
+
+          <div class="roi-kpi-card">
+            <span class="roi-kpi-label">FINANCIAL ROI MULTIPLIER</span>
+            <div class="roi-kpi-val text-cyan" id="roiMultiplier">415% ROI</div>
+            <div class="roi-kpi-sub">Payback Period: 2.9 Months</div>
+          </div>
+
+          <div class="roi-kpi-card">
+            <span class="roi-kpi-label">MTBF IMPROVEMENT (HOURS)</span>
+            <div class="roi-kpi-val" id="roiMtbf">5,420 h</div>
+            <div class="roi-kpi-sub"><span class="text-healthy">&uarr; +68%</span> vs unmonitored baseline</div>
+          </div>
+
+          <div class="roi-kpi-card">
+            <span class="roi-kpi-label">MTTR REDUCTION (DOWNTIME)</span>
+            <div class="roi-kpi-val" id="roiMttr">1.8 Hours</div>
+            <div class="roi-kpi-sub"><span class="text-healthy">&darr; -78%</span> planned off-shift repairs</div>
+          </div>
+        </div>
+
+        <!-- Interactive Calculator & Comparison Chart -->
+        <div class="economics-calc-grid">
+          <!-- Left: User Parameter Controls -->
+          <div class="calc-controls-card">
+            <h4 class="diagnostics-header">🧮 Interactive Facility Cost Parameters</h4>
+            
+            <div class="calc-field-group">
+              <div class="calc-field-label">
+                <label for="downtimeCostSlider">Unplanned Production Downtime Cost ($/Hour):</label>
+                <span class="calc-val-display" id="downtimeCostDisplay">$1,200 / hr</span>
+              </div>
+              <input type="range" id="downtimeCostSlider" min="200" max="4000" step="100" value="1200" class="form-range">
+              <div class="range-bounds"><span>$200/h (Light Mfg)</span><span>$1,200/h (Standard)</span><span>$4,000/h (Heavy Industrial)</span></div>
+            </div>
+
+            <div class="calc-field-group">
+              <div class="calc-field-label">
+                <label for="operatingHoursSlider">Daily Operating Schedule (Hours/Day):</label>
+                <span class="calc-val-display" id="operatingHoursDisplay">16 Hours / Day</span>
+              </div>
+              <input type="range" id="operatingHoursSlider" min="8" max="24" step="1" value="16" class="form-range">
+              <div class="range-bounds"><span>8 h (Single Shift)</span><span>16 h (Double Shift)</span><span>24 h (Continuous Plant)</span></div>
+            </div>
+
+            <div class="calc-field-group">
+              <div class="calc-field-label">
+                <label for="motorsCountSlider">Monitored Motor Fleet Size:</label>
+                <span class="calc-val-display" id="motorsCountDisplay">4 Motors</span>
+              </div>
+              <input type="range" id="motorsCountSlider" min="1" max="20" step="1" value="4" class="form-range">
+              <div class="range-bounds"><span>1 Unit</span><span>4 Units</span><span>20 Units</span></div>
+            </div>
+          </div>
+
+          <!-- Right: Visual Comparison Breakdown -->
+          <div class="calc-comparison-card">
+            <h4 class="diagnostics-header">⚖️ Incident Cost Comparison (Per Catastrophic Event)</h4>
+            
+            <div class="comparison-bar-item">
+              <div class="comp-label-row">
+                <span class="comp-name">🔴 Run-To-Failure Breakdown Cost</span>
+                <span class="comp-val text-red" id="compBreakdownCost">$13,700</span>
+              </div>
+              <div class="comp-track">
+                <div class="comp-fill comp-fill-red" id="compBarBreakdown" style="width: 100%;"></div>
+              </div>
+              <div class="comp-breakdown-sub">
+                Emergency Stator/Bearing Replacement ($3,500) + 8.5h Line Stoppage ($10,200)
+              </div>
+            </div>
+
+            <div class="comparison-bar-item">
+              <div class="comp-label-row">
+                <span class="comp-name">🟢 MotorGuard AI Planned Predictive Action</span>
+                <span class="comp-val text-healthy" id="compPredictiveCost">$850</span>
+              </div>
+              <div class="comp-track">
+                <div class="comp-fill comp-fill-green" id="compBarPredictive" style="width: 6.2%;"></div>
+              </div>
+              <div class="comp-breakdown-sub">
+                Off-shift Scheduled Relubrication ($350) + 1.5h Planned Window ($500)
+              </div>
+            </div>
+
+            <div class="comp-net-savings-box">
+              <span class="savings-kicker">NET SAVINGS PER PREVENTED FAULT INCIDENT</span>
+              <div class="savings-amount" id="compNetSavings">$12,850</div>
+              <span class="savings-pct text-healthy">✓ 93.8% Overall Cost Reduction</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 7: TELEMETRY AUDIT TABLE -->
+    <section class="dashboard-panel" id="auditTablePanel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">📋 Telemetry Audit Log &amp; Diagnosis</h2>
+          <p class="panel-subtitle">Searchable real-time records with automated health classifications &amp; ISO diagnostics</p>
         </div>
         <div class="table-controls">
           <select id="statusFilterSelect" class="select-input">
@@ -886,7 +1162,7 @@
     <!-- FOOTER -->
     <footer class="app-footer">
       <div>
-        <b>MotorGuard AI</b> &bull; B.Tech Intermediate Engineering Project &bull; Induction Motor Condition-Monitoring &amp; Prognostics
+        <b>MotorGuard AI</b> &bull; B.Tech Final Year Capstone Project &bull; Industrial Induction Motor Condition-Monitoring &amp; Prognostics
       </div>
       <div>
         Built with Pure HTML5, CSS3, &amp; Modern JavaScript &bull; Hosted on GitHub Pages
@@ -894,6 +1170,8 @@
     </footer>
 
   </main>
+  </div><!-- .app-main -->
+</div><!-- .app-layout -->
 
   <!-- Application JavaScript -->
   <script src="app.js"></script>

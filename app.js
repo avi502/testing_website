@@ -875,9 +875,11 @@ function updateUI() {
     `;
   }
 
-  // 6. Update Intermediate Engineering Diagnostics (FFT Spectrum & RUL Prognosis)
+  // 6. Update Intermediate & Capstone Engineering Diagnostics
   updateFftSpectrum(latest);
   updateRulDegradation(latest);
+  updateDigitalTwinSubsystems(latest);
+  updateSidebarHealth(latest);
 
   // 7. Update Diagnostic Table
   renderAuditTable();
@@ -1093,6 +1095,118 @@ function updateRulDegradation(latest) {
 }
 
 // =============================================================================
+// CAPSTONE: DIGITAL TWIN 4-SUBSYSTEM HEALTH ENGINE
+// =============================================================================
+function updateDigitalTwinSubsystems(latest) {
+  const temp = latest.temperature || 52;
+  const vib = latest.vibration || 2.1;
+  const rpm = latest.rotational_speed || 1475;
+  const curr = latest.current || 9.8;
+  const volt = latest.voltage || 400;
+
+  // 1. Stator Insulation Integrity (0-100%)
+  let statorPct = 100 - Math.max(0, (temp - 50) * 1.6);
+  if (temp >= 90) statorPct = Math.max(18, 50 - (temp - 90) * 2.5);
+  statorPct = Math.min(99.5, Math.max(15, parseFloat(statorPct.toFixed(1))));
+
+  // 2. Bearings Integrity (0-100%)
+  let bearingsPct = 100 - Math.max(0, (vib - 1.5) * 12);
+  if (state.activeFault === "bearing") bearingsPct = Math.min(bearingsPct, 24.5);
+  bearingsPct = Math.min(99.2, Math.max(12, parseFloat(bearingsPct.toFixed(1))));
+
+  // 3. Rotor Balance & Air Gap (0-100%)
+  const slip = Math.max(0, (1500 - rpm) / 1500);
+  let rotorPct = 100 - (slip * 500);
+  if (rpm < 1370) rotorPct = Math.max(22, 50 - (1370 - rpm) * 0.8);
+  rotorPct = Math.min(99.8, Math.max(20, parseFloat(rotorPct.toFixed(1))));
+
+  // 4. Electrical Power Line (0-100%)
+  let voltDev = Math.abs(volt - 400);
+  let currSurge = Math.max(0, curr - 14.8);
+  let electPct = 100 - (voltDev * 0.8 + currSurge * 3.5);
+  electPct = Math.min(99.4, Math.max(16, parseFloat(electPct.toFixed(1))));
+
+  function updateSubsystem(pctId, barId, descId, val, okDesc, warnDesc, critDesc) {
+    const pctEl = document.getElementById(pctId);
+    const barEl = document.getElementById(barId);
+    const descEl = document.getElementById(descId);
+    if (!pctEl || !barEl) return;
+
+    pctEl.textContent = `${val.toFixed(1)}%`;
+    barEl.style.width = `${val}%`;
+
+    if (val >= 75) {
+      pctEl.className = "ss-pct text-healthy";
+      barEl.className = "comp-fill comp-fill-green";
+      if (descEl) descEl.textContent = okDesc;
+    } else if (val >= 45) {
+      pctEl.className = "ss-pct text-amber";
+      barEl.className = "comp-fill";
+      barEl.style.background = "linear-gradient(90deg, #d97706, #f59e0b)";
+      if (descEl) descEl.textContent = warnDesc;
+    } else {
+      pctEl.className = "ss-pct text-red";
+      barEl.className = "comp-fill comp-fill-red";
+      if (descEl) descEl.textContent = critDesc;
+    }
+  }
+
+  updateSubsystem(
+    "pctStator", "barStator", "descStator", statorPct,
+    `Thermal rise ${temp.toFixed(1)}°C (Class B optimal). No breakdown.`,
+    `Thermal elevation ${temp.toFixed(1)}°C (Class F envelope). Monitor closely.`,
+    `Critical thermal hazard ${temp.toFixed(1)}°C. Imminent coil burnout threat!`
+  );
+
+  updateSubsystem(
+    "pctBearings", "barBearings", "descBearings", bearingsPct,
+    `Vibration ${vib.toFixed(2)} mm/s (ISO Zone A). BPFO/BPFI raceways intact.`,
+    `Vibration ${vib.toFixed(2)} mm/s (ISO Zone C). Bearing lubrication deficit.`,
+    `Critical bearing vibration ${vib.toFixed(2)} mm/s. Severe race spalling detected!`
+  );
+
+  updateSubsystem(
+    "pctRotor", "barRotor", "descRotor", rotorPct,
+    `Rotor speed ${rpm} RPM (Slip s = ${(slip * 100).toFixed(2)}%). Air gap uniform.`,
+    `Rotor speed slip ${rpm} RPM. Drag or mild mechanical resistance detected.`,
+    `Severe speed drag ${rpm} RPM. Rotor bar micro-fissure or stall risk!`
+  );
+
+  updateSubsystem(
+    "pctElectrical", "barElectrical", "descElectrical", electPct,
+    `Supply ${volt.toFixed(0)}V balanced, current ${curr.toFixed(1)}A within 15A rating.`,
+    `Supply deviation ${volt.toFixed(0)}V / ${curr.toFixed(1)}A. Unbalance advisory.`,
+    `Severe electrical dip ${volt.toFixed(0)}V with ${curr.toFixed(1)}A overload surge!`
+  );
+}
+
+// =============================================================================
+// CAPSTONE: SIDEBAR HEALTH & UPTIME SYNCHRONIZER
+// =============================================================================
+function updateSidebarHealth(latest) {
+  const status = latest.health_status || "Healthy";
+  const pulseEl = document.getElementById("sidebarPulseDot");
+  const tagEl = document.getElementById("sidebarHealthTag");
+
+  if (pulseEl) {
+    pulseEl.className = `sidebar-pulse-dot dot-${status === "Healthy" ? "green" : (status === "Warning" ? "amber" : "red")}`;
+  }
+
+  if (tagEl) {
+    if (status === "Critical") {
+      tagEl.textContent = "CRITICAL (ZONE D)";
+      tagEl.style.color = "var(--status-critical)";
+    } else if (status === "Warning") {
+      tagEl.textContent = "WARNING (ZONE C)";
+      tagEl.style.color = "var(--status-warning)";
+    } else {
+      tagEl.textContent = "HEALTHY (ZONE A)";
+      tagEl.style.color = "var(--status-healthy)";
+    }
+  }
+}
+
+// =============================================================================
 // AUDIT TABLE RENDERER
 // =============================================================================
 function renderAuditTable() {
@@ -1287,6 +1401,174 @@ function initEventListeners() {
 
   // Intermediate Engineering Tabs Controller
   initIntermediateTabs();
+
+  // Capstone Left Sidebar & Features
+  initSidebarNav();
+  initEconomicsCalculator();
+  initPrintReport();
+}
+
+function initSidebarNav() {
+  const sidebarLinks = document.querySelectorAll(".sidebar-tab-link");
+  const sidebar = document.getElementById("appSidebar");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  const toggleBtn = document.getElementById("sidebarToggleBtn");
+
+  // Mobile toggle drawer
+  if (toggleBtn && sidebar && backdrop) {
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+      backdrop.classList.toggle("active");
+    });
+
+    backdrop.addEventListener("click", () => {
+      sidebar.classList.remove("open");
+      backdrop.classList.remove("active");
+    });
+  }
+
+  // Navigation Links Click
+  sidebarLinks.forEach(link => {
+    link.addEventListener("click", () => {
+      const targetId = link.getAttribute("data-target");
+      const subtab = link.getAttribute("data-subtab");
+
+      sidebarLinks.forEach(l => l.classList.remove("active"));
+      link.classList.add("active");
+
+      // If targeting a subtab in Section 5
+      if (subtab) {
+        const subtabBtn = document.querySelector(`.suite-tab-btn[data-tab="${subtab}"]`);
+        if (subtabBtn) subtabBtn.click();
+      }
+
+      // Smooth scroll to section
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        targetEl.classList.add("section-highlight");
+        setTimeout(() => targetEl.classList.remove("section-highlight"), 1500);
+      }
+
+      // Close mobile drawer if open
+      if (sidebar && sidebar.classList.contains("open")) {
+        sidebar.classList.remove("open");
+        backdrop.classList.remove("active");
+      }
+    });
+  });
+
+  // Scrollspy: update active sidebar tab as user scrolls through sections
+  const sectionIds = ["kpiGrid", "scadaDialsPanel", "telemetryChartsPanel", "analyticsPanel", "manualPredictPanel", "intermediateSuitePanel", "economicsPanel", "auditTablePanel"];
+  
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          const matchingLink = document.querySelector(`.sidebar-tab-link[data-target="${id}"]`);
+          if (matchingLink) {
+            sidebarLinks.forEach(l => l.classList.remove("active"));
+            matchingLink.classList.add("active");
+          }
+        }
+      });
+    }, { rootMargin: "-15% 0px -65% 0px" });
+
+    sectionIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+  }
+}
+
+// =============================================================================
+// CAPSTONE: MAINTENANCE ECONOMICS & ROI CALCULATOR
+// =============================================================================
+function initEconomicsCalculator() {
+  const dtSlider = document.getElementById("downtimeCostSlider");
+  const hrsSlider = document.getElementById("operatingHoursSlider");
+  const motorsSlider = document.getElementById("motorsCountSlider");
+
+  function recalculateEconomics() {
+    if (!dtSlider || !hrsSlider || !motorsSlider) return;
+
+    const downtimeRate = parseFloat(dtSlider.value) || 1200;
+    const opHours = parseFloat(hrsSlider.value) || 16;
+    const motorCount = parseFloat(motorsSlider.value) || 4;
+
+    const dtDisp = document.getElementById("downtimeCostDisplay");
+    if (dtDisp) dtDisp.textContent = `$${downtimeRate.toLocaleString()} / hr`;
+    const opDisp = document.getElementById("operatingHoursDisplay");
+    if (opDisp) opDisp.textContent = `${opHours} Hours / Day`;
+    const mcDisp = document.getElementById("motorsCountDisplay");
+    if (mcDisp) mcDisp.textContent = `${motorCount} ${motorCount === 1 ? 'Motor' : 'Motors'}`;
+
+    // Financial Formulas
+    const lineStoppageCost = downtimeRate * 8.5;
+    const hardwareReplaceCost = 3500;
+    const catastrophicCost = lineStoppageCost + hardwareReplaceCost;
+
+    const plannedLabor = 350;
+    const plannedDowntime = downtimeRate * 0.42; // only 25 mins equivalent off-shift
+    const plannedAiCost = plannedLabor + plannedDowntime;
+
+    const netSavingsPerFault = Math.max(0, catastrophicCost - plannedAiCost);
+    const annualFaultsPrevented = Math.round(motorCount * 1.1);
+    const annualNetSavings = netSavingsPerFault * annualFaultsPrevented;
+    const annualHardwareInvestment = motorCount * 2800;
+    const roiMultiplier = Math.round((annualNetSavings / annualHardwareInvestment) * 100);
+
+    // Update UI elements
+    const compBreakdown = document.getElementById("compBreakdownCost");
+    if (compBreakdown) compBreakdown.textContent = `$${Math.round(catastrophicCost).toLocaleString()}`;
+    const compPred = document.getElementById("compPredictiveCost");
+    if (compPred) compPred.textContent = `$${Math.round(plannedAiCost).toLocaleString()}`;
+    const compNet = document.getElementById("compNetSavings");
+    if (compNet) compNet.textContent = `$${Math.round(netSavingsPerFault).toLocaleString()}`;
+    const roiAnn = document.getElementById("roiAnnualSavings");
+    if (roiAnn) roiAnn.textContent = `$${Math.round(annualNetSavings).toLocaleString()}`;
+    const roiMult = document.getElementById("roiMultiplier");
+    if (roiMult) roiMult.textContent = `${roiMultiplier}% ROI`;
+
+    const compBarPredictive = document.getElementById("compBarPredictive");
+    if (compBarPredictive) {
+      const predBarWidth = Math.min(100, Math.max(4, (plannedAiCost / catastrophicCost) * 100));
+      compBarPredictive.style.width = `${predBarWidth.toFixed(1)}%`;
+    }
+  }
+
+  if (dtSlider) dtSlider.addEventListener("input", recalculateEconomics);
+  if (hrsSlider) hrsSlider.addEventListener("input", recalculateEconomics);
+  if (motorsSlider) motorsSlider.addEventListener("input", recalculateEconomics);
+
+  recalculateEconomics();
+}
+
+// =============================================================================
+// CAPSTONE: UPTIME COUNTER & PDF EXPORT
+// =============================================================================
+const appStartTime = Date.now();
+
+function updateUptime() {
+  const elapsedSec = Math.floor((Date.now() - appStartTime) / 1000);
+  const hrs = String(Math.floor(elapsedSec / 3600)).padStart(2, '0');
+  const mins = String(Math.floor((elapsedSec % 3600) / 60)).padStart(2, '0');
+  const secs = String(elapsedSec % 60).padStart(2, '0');
+
+  const uptimeEl = document.getElementById("sidebarUptime");
+  if (uptimeEl) {
+    uptimeEl.textContent = `${hrs}:${mins}:${secs}`;
+  }
+}
+
+function initPrintReport() {
+  const printBtn = document.getElementById("printReportBtn");
+  if (printBtn) {
+    printBtn.addEventListener("click", () => {
+      window.print();
+    });
+  }
 }
 
 function initIntermediateTabs() {
@@ -1595,4 +1877,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Start real-time 1 Hz stream
   state.timerId = setInterval(tick, state.streamInterval);
+
+  // Start system uptime counter
+  updateUptime();
+  setInterval(updateUptime, 1000);
 });
