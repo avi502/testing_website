@@ -1043,8 +1043,8 @@
                 MotorGuard AI (Condition-Based Maintenance)</p>
             </div>
             <div class="legend-pills">
-              <span class="pill-dot dot-red"></span> Breakdown: $13,700
-              <span class="pill-dot dot-green"></span> Planned AI Fix: $850
+              <span class="pill-dot dot-red"></span> Breakdown: $920
+              <span class="pill-dot dot-green"></span> Planned AI Fix: $75
             </div>
           </div>
 
@@ -1053,14 +1053,14 @@
             <div class="economics-kpis-grid">
               <div class="roi-kpi-card">
                 <span class="roi-kpi-label">ESTIMATED NET ANNUAL SAVINGS</span>
-                <div class="roi-kpi-val text-healthy" id="roiAnnualSavings">$48,500</div>
-                <div class="roi-kpi-sub">Based on 4 prevented breakdowns / year</div>
+                <div class="roi-kpi-val text-healthy" id="roiAnnualSavings">$4,225</div>
+                <div class="roi-kpi-sub">Based on 4-5 prevented faults / year</div>
               </div>
 
               <div class="roi-kpi-card">
                 <span class="roi-kpi-label">FINANCIAL ROI MULTIPLIER</span>
-                <div class="roi-kpi-val text-cyan" id="roiMultiplier">415% ROI</div>
-                <div class="roi-kpi-sub">Payback Period: 2.9 Months</div>
+                <div class="roi-kpi-val text-cyan" id="roiMultiplier">587% ROI</div>
+                <div class="roi-kpi-sub">Payback Period: 2.1 Months</div>
               </div>
 
               <div class="roi-kpi-card">
@@ -1085,12 +1085,12 @@
                 <div class="calc-field-group">
                   <div class="calc-field-label">
                     <label for="downtimeCostSlider">Unplanned Production Downtime Cost ($/Hour):</label>
-                    <span class="calc-val-display" id="downtimeCostDisplay">$1,200 / hr</span>
+                    <span class="calc-val-display" id="downtimeCostDisplay">$120 / hr</span>
                   </div>
-                  <input type="range" id="downtimeCostSlider" min="200" max="4000" step="100" value="1200"
+                  <input type="range" id="downtimeCostSlider" min="30" max="500" step="10" value="120"
                     class="form-range">
-                  <div class="range-bounds"><span>$200/h (Light Mfg)</span><span>$1,200/h
-                      (Standard)</span><span>$4,000/h (Heavy Industrial)</span></div>
+                  <div class="range-bounds"><span>$30/h (Small Workshop)</span><span>$120/h
+                      (Standard Plant)</span><span>$500/h (Assembly Line)</span></div>
                 </div>
 
                 <div class="calc-field-group">
@@ -1120,33 +1120,33 @@
                 <div class="comparison-bar-item">
                   <div class="comp-label-row">
                     <span class="comp-name">🔴 Run-To-Failure Breakdown Cost</span>
-                    <span class="comp-val text-red" id="compBreakdownCost">$13,700</span>
+                    <span class="comp-val text-red" id="compBreakdownCost">$920</span>
                   </div>
                   <div class="comp-track">
                     <div class="comp-fill comp-fill-red" id="compBarBreakdown" style="width: 100%;"></div>
                   </div>
                   <div class="comp-breakdown-sub">
-                    Emergency Stator/Bearing Replacement ($3,500) + 8.5h Line Stoppage ($10,200)
+                    Emergency Motor Rewind/Bearing ($380) + 4.5h Unplanned Stoppage ($540)
                   </div>
                 </div>
 
                 <div class="comparison-bar-item">
                   <div class="comp-label-row">
                     <span class="comp-name">🟢 MotorGuard AI Planned Predictive Action</span>
-                    <span class="comp-val text-healthy" id="compPredictiveCost">$850</span>
+                    <span class="comp-val text-healthy" id="compPredictiveCost">$75</span>
                   </div>
                   <div class="comp-track">
-                    <div class="comp-fill comp-fill-green" id="compBarPredictive" style="width: 6.2%;"></div>
+                    <div class="comp-fill comp-fill-green" id="compBarPredictive" style="width: 8.2%;"></div>
                   </div>
                   <div class="comp-breakdown-sub">
-                    Off-shift Scheduled Relubrication ($350) + 1.5h Planned Window ($500)
+                    Off-shift Scheduled Relubrication ($45) + 15m Planned Window ($30)
                   </div>
                 </div>
 
                 <div class="comp-net-savings-box">
                   <span class="savings-kicker">NET SAVINGS PER PREVENTED FAULT INCIDENT</span>
-                  <div class="savings-amount" id="compNetSavings">$12,850</div>
-                  <span class="savings-pct text-healthy">✓ 93.8% Overall Cost Reduction</span>
+                  <div class="savings-amount" id="compNetSavings">$845</div>
+                  <span class="savings-pct text-healthy">✓ 91.8% Overall Cost Reduction</span>
                 </div>
               </div>
             </div>

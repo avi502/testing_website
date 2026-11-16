@@ -14,7 +14,7 @@ An enterprise-grade **Dark & Light Mode** industrial predictive maintenance and 
 - **Sleek Left Sidebar Navigation Menu:** 11 operational views with live motor status widget, system uptime counter, and mobile responsive drawer.
 - **ISO 13373-1 Fast Fourier Transform (FFT) Frequency Spectrum:** Real-time harmonic breakdown (1X, 2X, 3X, BPFO, BPFI) for bearing race and shaft misalignment detection.
 - **Weibull Remaining Useful Life (RUL) Prognostics:** Health Index degradation curves (100% to 0% HI) with 95% confidence bounds and hours-to-failure prediction.
-- **Maintenance Economics & Financial ROI Calculator:** Quantified cost-benefit comparison between corrective breakdowns ($13,700) and predictive AI interventions ($850) with interactive facility sliders.
+- **Maintenance Economics & Financial ROI Calculator:** Quantified cost-benefit comparison between corrective breakdowns ($920) and predictive AI interventions ($75) with interactive facility sliders.
 - **Digital Twin Subsystems:** Live real-time health progress bars for Stator Insulation, Bearings Assembly, Rotor Air Gap, and 3-Phase Electrical Supply.
 - **Multi-Model ML Benchmarks:** Hybrid Ensemble (98.4% Acc, 0.991 ROC-AUC), Autoencoder Neural Network, and Support Vector Machine with 3×3 Confusion Matrix.
 - **Interactive Manual Sensor Studio:** Dual-bound sliders for custom parameter testing, instant AI diagnosis, and live SCADA injection.

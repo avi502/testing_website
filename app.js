@@ -1504,7 +1504,7 @@ function initEconomicsCalculator() {
   function recalculateEconomics() {
     if (!dtSlider || !hrsSlider || !motorsSlider) return;
 
-    const downtimeRate = parseFloat(dtSlider.value) || 1200;
+    const downtimeRate = parseFloat(dtSlider.value) || 120;
     const opHours = parseFloat(hrsSlider.value) || 16;
     const motorCount = parseFloat(motorsSlider.value) || 4;
 
@@ -1515,19 +1515,19 @@ function initEconomicsCalculator() {
     const mcDisp = document.getElementById("motorsCountDisplay");
     if (mcDisp) mcDisp.textContent = `${motorCount} ${motorCount === 1 ? 'Motor' : 'Motors'}`;
 
-    // Financial Formulas
-    const lineStoppageCost = downtimeRate * 8.5;
-    const hardwareReplaceCost = 3500;
+    // Realistic Industrial Financial Formulas (Scaled for 7.5kW - 15kW Motor Fleet)
+    const lineStoppageCost = downtimeRate * 4.5; // ~4.5h unplanned stoppage
+    const hardwareReplaceCost = 380;            // Emergency rewind / bearing replacement
     const catastrophicCost = lineStoppageCost + hardwareReplaceCost;
 
-    const plannedLabor = 350;
-    const plannedDowntime = downtimeRate * 0.42; // only 25 mins equivalent off-shift
+    const plannedLabor = 45;                    // Scheduled greasing & alignment labor
+    const plannedDowntime = downtimeRate * 0.25; // 15 mins off-shift maintenance window
     const plannedAiCost = plannedLabor + plannedDowntime;
 
     const netSavingsPerFault = Math.max(0, catastrophicCost - plannedAiCost);
-    const annualFaultsPrevented = Math.round(motorCount * 1.1);
+    const annualFaultsPrevented = Math.round(motorCount * 1.2);
     const annualNetSavings = netSavingsPerFault * annualFaultsPrevented;
-    const annualHardwareInvestment = motorCount * 2800;
+    const annualHardwareInvestment = motorCount * 180; // IoT sensor node per motor
     const roiMultiplier = Math.round((annualNetSavings / annualHardwareInvestment) * 100);
 
     // Update UI elements
@@ -1546,6 +1546,20 @@ function initEconomicsCalculator() {
     if (compBarPredictive) {
       const predBarWidth = Math.min(100, Math.max(4, (plannedAiCost / catastrophicCost) * 100));
       compBarPredictive.style.width = `${predBarWidth.toFixed(1)}%`;
+    }
+
+    // Dynamic savings percentage in net savings box
+    const savingsPctEl = document.querySelector(".comp-net-savings-box .savings-pct");
+    if (savingsPctEl) {
+      const pct = (((catastrophicCost - plannedAiCost) / catastrophicCost) * 100).toFixed(1);
+      savingsPctEl.textContent = `✓ ${pct}% Overall Cost Reduction`;
+    }
+
+    // Dynamic subtext for breakdown and planned bars
+    const breakdownSubEl = document.querySelectorAll(".comp-breakdown-sub");
+    if (breakdownSubEl && breakdownSubEl.length >= 2) {
+      breakdownSubEl[0].textContent = `Emergency Motor Rewind/Bearing ($${hardwareReplaceCost}) + 4.5h Unplanned Stoppage ($${Math.round(lineStoppageCost)})`;
+      breakdownSubEl[1].textContent = `Off-shift Scheduled Relubrication ($${plannedLabor}) + 15m Planned Window ($${Math.round(plannedDowntime)})`;
     }
   }
 
