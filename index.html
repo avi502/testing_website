@@ -277,7 +277,181 @@
       </div>
     </section>
 
-    <!-- SECTION 4: TELEMETRY AUDIT TABLE -->
+    <!-- SECTION 4: MANUAL SENSOR INPUT & INSTANT AI FAULT PREDICTOR -->
+    <section class="dashboard-panel" id="manualPredictPanel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">🎛️ Manual Sensor Input & Instant AI Fault Predictor</h2>
+          <p class="panel-subtitle">Enter custom motor sensor readings to run real-time AI anomaly detection, ISO 10816-3 severity checks & risk score calculation</p>
+        </div>
+        <div class="preset-pill-group">
+          <span class="preset-label">QUICK TEST PRESETS:</span>
+          <button type="button" class="preset-btn" data-preset="healthy">🟢 Healthy</button>
+          <button type="button" class="preset-btn" data-preset="bearing">🟡 Bearing Warning</button>
+          <button type="button" class="preset-btn" data-preset="thermal">🔴 High Overheating</button>
+          <button type="button" class="preset-btn" data-preset="electrical">🔴 Electrical Dip</button>
+        </div>
+      </div>
+
+      <div class="predict-layout">
+        <!-- Left Column: Input Form Controls -->
+        <div class="predict-form-container">
+          <form id="customPredictForm" onsubmit="return false;">
+            <div class="input-fields-grid">
+              
+              <!-- 1. Vibration -->
+              <div class="input-group">
+                <div class="input-label-row">
+                  <label for="inputVib">Vibration (mm/s)</label>
+                  <span class="input-hint">ISO 10816-3</span>
+                </div>
+                <div class="input-control">
+                  <input type="number" id="inputVib" step="0.1" min="0" max="25" value="2.3" class="form-input">
+                  <span class="input-unit">mm/s</span>
+                </div>
+                <input type="range" id="rangeVib" min="0" max="15" step="0.1" value="2.3" class="form-range">
+                <div class="range-bounds"><span>0 mm/s</span><span>Norm &lt;4.5</span><span>15 mm/s</span></div>
+              </div>
+
+              <!-- 2. Temperature -->
+              <div class="input-group">
+                <div class="input-label-row">
+                  <label for="inputTemp">Temperature (°C)</label>
+                  <span class="input-hint">Class B/F</span>
+                </div>
+                <div class="input-control">
+                  <input type="number" id="inputTemp" step="0.5" min="15" max="150" value="53.0" class="form-input">
+                  <span class="input-unit">°C</span>
+                </div>
+                <input type="range" id="rangeTemp" min="20" max="120" step="0.5" value="53.0" class="form-range">
+                <div class="range-bounds"><span>20 °C</span><span>Norm &lt;75</span><span>120 °C</span></div>
+              </div>
+
+              <!-- 3. Current -->
+              <div class="input-group">
+                <div class="input-label-row">
+                  <label for="inputCurr">Current (A)</label>
+                  <span class="input-hint">Full Load Amp</span>
+                </div>
+                <div class="input-control">
+                  <input type="number" id="inputCurr" step="0.1" min="0" max="40" value="9.8" class="form-input">
+                  <span class="input-unit">A</span>
+                </div>
+                <input type="range" id="rangeCurr" min="0" max="30" step="0.1" value="9.8" class="form-range">
+                <div class="range-bounds"><span>0 A</span><span>Norm &lt;15</span><span>30 A</span></div>
+              </div>
+
+              <!-- 4. Voltage -->
+              <div class="input-group">
+                <div class="input-label-row">
+                  <label for="inputVolt">Line Voltage (V)</label>
+                  <span class="input-hint">400V 3-Phase</span>
+                </div>
+                <div class="input-control">
+                  <input type="number" id="inputVolt" step="1" min="250" max="480" value="400" class="form-input">
+                  <span class="input-unit">V</span>
+                </div>
+                <input type="range" id="rangeVolt" min="300" max="460" step="1" value="400" class="form-range">
+                <div class="range-bounds"><span>300 V</span><span>Nom 400V</span><span>460 V</span></div>
+              </div>
+
+              <!-- 5. Speed -->
+              <div class="input-group">
+                <div class="input-label-row">
+                  <label for="inputSpeed">Rotor Speed (RPM)</label>
+                  <span class="input-hint">4-Pole 50Hz</span>
+                </div>
+                <div class="input-control">
+                  <input type="number" id="inputSpeed" step="5" min="800" max="1800" value="1475" class="form-input">
+                  <span class="input-unit">RPM</span>
+                </div>
+                <input type="range" id="rangeSpeed" min="1200" max="1550" step="5" value="1475" class="form-range">
+                <div class="range-bounds"><span>1200 RPM</span><span>Sync 1500</span><span>1550 RPM</span></div>
+              </div>
+
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="predict-actions-row">
+              <button type="button" id="btnCalculatePredict" class="btn btn-predict">
+                <span>⚡ Calculate & AI Predict</span>
+              </button>
+              <button type="button" id="btnInjectCustom" class="btn btn-primary">
+                <span>🚀 Send to Live SCADA Dials & Audit Table</span>
+              </button>
+              <button type="button" id="btnResetInput" class="btn btn-secondary">
+                <span>↺ Reset</span>
+              </button>
+            </div>
+            <div id="injectSuccessNotice" class="inject-notice" style="display: none;">
+              ✓ Data successfully pushed to live SCADA dials, timeline charts & audit log!
+            </div>
+          </form>
+        </div>
+
+        <!-- Right Column: AI Prediction Result Card -->
+        <div class="predict-result-card" id="predictResultCard">
+          <div class="predict-result-header">
+            <div>
+              <span class="result-badge-kicker">AI DIAGNOSTIC VERDICT</span>
+              <h3 class="result-headline" id="predHeadline">Motor Operating Optimally</h3>
+            </div>
+            <span class="badge-status badge-healthy" id="predStatusBadge">HEALTHY</span>
+          </div>
+
+          <!-- Risk Progress Section -->
+          <div class="predict-risk-gauge-row">
+            <div class="risk-score-display">
+              <span class="risk-number" id="predRiskScore">8</span>
+              <span class="risk-max">/100</span>
+            </div>
+            <div class="risk-bar-container">
+              <div class="risk-bar-meta">
+                <span>Calculated Risk Score</span>
+                <span id="predRiskCategory" class="risk-cat-healthy">SAFE OPERATING ZONE</span>
+              </div>
+              <div class="risk-progress-track">
+                <div class="risk-progress-fill" id="predRiskProgress" style="width: 8%; background: var(--status-healthy);"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4-Cell Diagnostic Breakdown -->
+          <div class="predict-metrics-subgrid">
+            <div class="metric-cell">
+              <span class="cell-label">AI Anomaly Status</span>
+              <span class="cell-value" id="predAnomalyFlag">✓ Normal (No Anomaly)</span>
+            </div>
+            <div class="metric-cell">
+              <span class="cell-label">ISO 10816-3 Vibration</span>
+              <span class="cell-value" id="predIsoStatus">Zone A: Good (&lt;4.5 mm/s)</span>
+            </div>
+            <div class="metric-cell">
+              <span class="cell-label">Thermal Limits</span>
+              <span class="cell-value" id="predThermalStatus">Optimal (&lt;75°C)</span>
+            </div>
+            <div class="metric-cell">
+              <span class="cell-label">PCA 2D Coordinates</span>
+              <span class="cell-value" id="predPcaCoords">PC1: -0.32 | PC2: +0.15</span>
+            </div>
+          </div>
+
+          <!-- Root Cause Assessment Box -->
+          <div class="predict-verdict-box">
+            <div class="verdict-title">🔍 Diagnostic Root-Cause Assessment:</div>
+            <div class="verdict-text" id="predVerdictText">All 5 sensor channels are operating inside nominal baseline limits. Rotor unbalance and bearing vibrations are minimal.</div>
+          </div>
+
+          <!-- Prescriptive Maintenance Advice Box -->
+          <div class="predict-action-box" id="predictActionBox">
+            <div class="action-title">🛠️ Recommended Prescriptive Action:</div>
+            <div class="action-text" id="predActionText">System running smoothly. Continue regular periodic inspection cycle.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: TELEMETRY AUDIT TABLE -->
     <section class="dashboard-panel">
       <div class="panel-header">
         <div>

@@ -315,6 +315,13 @@ function computePCA2D(dataset) {
   const varPct1 = Math.min(99, Math.round((pc1.val / totalVar) * 100));
   const varPct2 = Math.min(99 - varPct1, Math.round((pc2.val / totalVar) * 100));
 
+  state.pcaModel = {
+    means,
+    stds,
+    pc1Vec: pc1.vec,
+    pc2Vec: pc2.vec
+  };
+
   return {
     coords,
     eigenvalues: [pc1.val, pc2.val],
@@ -852,6 +859,298 @@ function initEventListeners() {
 
   // CSV Export button
   document.getElementById("downloadCsvBtn").addEventListener("click", exportCsvReport);
+
+  // Two-way bindings for manual input sliders and number boxes
+  bindTwoWay("inputVib", "rangeVib");
+  bindTwoWay("inputTemp", "rangeTemp");
+  bindTwoWay("inputCurr", "rangeCurr");
+  bindTwoWay("inputVolt", "rangeVolt");
+  bindTwoWay("inputSpeed", "rangeSpeed");
+
+  // Preset Buttons
+  document.querySelectorAll(".preset-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const presetKey = e.currentTarget.getAttribute("data-preset");
+      const values = PRESET_VALUES[presetKey];
+      if (values) {
+        setManualInputs(values);
+        calculateAndPredictCustom();
+      }
+    });
+  });
+
+  // Calculate & AI Predict Button
+  const calcBtn = document.getElementById("btnCalculatePredict");
+  if (calcBtn) {
+    calcBtn.addEventListener("click", calculateAndPredictCustom);
+  }
+
+  // Send to Live SCADA Dials & Audit Table Button
+  const injectBtn = document.getElementById("btnInjectCustom");
+  if (injectBtn) {
+    injectBtn.addEventListener("click", injectCustomToLiveSCADA);
+  }
+
+  // Reset Button
+  const resetBtn = document.getElementById("btnResetInput");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      setManualInputs(PRESET_VALUES.healthy);
+      calculateAndPredictCustom();
+    });
+  }
+}
+
+// =============================================================================
+// MANUAL SENSOR INPUT & AI PREDICTOR ENGINE
+// =============================================================================
+const PRESET_VALUES = {
+  healthy: { vib: 2.2, temp: 52.0, curr: 9.8, volt: 400, speed: 1475 },
+  bearing: { vib: 7.8, temp: 68.5, curr: 11.2, volt: 396, speed: 1455 },
+  thermal: { vib: 4.1, temp: 95.0, curr: 18.0, volt: 388, speed: 1430 },
+  electrical: { vib: 6.2, temp: 85.0, curr: 23.0, volt: 340, speed: 1355 }
+};
+
+function bindTwoWay(numId, rangeId) {
+  const numInput = document.getElementById(numId);
+  const rangeInput = document.getElementById(rangeId);
+  if (!numInput || !rangeInput) return;
+
+  numInput.addEventListener("input", () => {
+    rangeInput.value = numInput.value;
+    calculateAndPredictCustom();
+  });
+
+  rangeInput.addEventListener("input", () => {
+    numInput.value = rangeInput.value;
+    calculateAndPredictCustom();
+  });
+}
+
+function getManualInputs() {
+  const vib = parseFloat(document.getElementById("inputVib").value) || 0;
+  const temp = parseFloat(document.getElementById("inputTemp").value) || 0;
+  const curr = parseFloat(document.getElementById("inputCurr").value) || 0;
+  const volt = parseFloat(document.getElementById("inputVolt").value) || 0;
+  const speed = parseFloat(document.getElementById("inputSpeed").value) || 0;
+
+  return {
+    vibration: parseFloat(vib.toFixed(2)),
+    temperature: parseFloat(temp.toFixed(1)),
+    current: parseFloat(curr.toFixed(2)),
+    voltage: parseFloat(volt.toFixed(1)),
+    rotational_speed: parseFloat(speed.toFixed(0))
+  };
+}
+
+function setManualInputs(values) {
+  if (values.vib !== undefined) {
+    document.getElementById("inputVib").value = values.vib;
+    document.getElementById("rangeVib").value = values.vib;
+  }
+  if (values.temp !== undefined) {
+    document.getElementById("inputTemp").value = values.temp;
+    document.getElementById("rangeTemp").value = values.temp;
+  }
+  if (values.curr !== undefined) {
+    document.getElementById("inputCurr").value = values.curr;
+    document.getElementById("rangeCurr").value = values.curr;
+  }
+  if (values.volt !== undefined) {
+    document.getElementById("inputVolt").value = values.volt;
+    document.getElementById("rangeVolt").value = values.volt;
+  }
+  if (values.speed !== undefined) {
+    document.getElementById("inputSpeed").value = values.speed;
+    document.getElementById("rangeSpeed").value = values.speed;
+  }
+}
+
+function calculateAndPredictCustom() {
+  const input = getManualInputs();
+  const evaluation = evaluateHealthAndRisk(input);
+
+  // 1. ISO 10816-3 Vibration Severity
+  let isoText, isoColor;
+  if (input.vibration < THRESHOLDS.vibration.warn) {
+    isoText = "Zone A/B: Good & Acceptable (<4.5 mm/s)";
+    isoColor = "var(--status-healthy)";
+  } else if (input.vibration < THRESHOLDS.vibration.crit) {
+    isoText = "Zone C: Restricted Advisory (4.5–7.1 mm/s)";
+    isoColor = "var(--status-warning)";
+  } else {
+    isoText = "Zone D: Critical Damage Threat (>7.1 mm/s)";
+    isoColor = "var(--status-critical)";
+  }
+
+  // 2. Thermal Rise Classification
+  let thermText, thermColor;
+  if (input.temperature < THRESHOLDS.temperature.warn) {
+    thermText = "Class B Rise: Optimal (<75°C)";
+    thermColor = "var(--status-healthy)";
+  } else if (input.temperature < THRESHOLDS.temperature.crit) {
+    thermText = "Class F Rise: Warning Envelope (75–90°C)";
+    thermColor = "var(--status-warning)";
+  } else {
+    thermText = "Thermal Breakdown: Critical Danger (>90°C)";
+    thermColor = "var(--status-critical)";
+  }
+
+  // 3. PCA Projection for this point
+  let pc1Val = 0, pc2Val = 0;
+  if (state.pcaModel) {
+    const { means, stds, pc1Vec, pc2Vec } = state.pcaModel;
+    const zRow = [
+      (input.vibration - means.vibration) / (stds.vibration || 1),
+      (input.temperature - means.temperature) / (stds.temperature || 1),
+      (input.current - means.current) / (stds.current || 1),
+      (input.voltage - means.voltage) / (stds.voltage || 1),
+      (input.rotational_speed - means.rotational_speed) / (stds.rotational_speed || 1)
+    ];
+    pc1Val = zRow.reduce((s, v, i) => s + v * pc1Vec[i], 0);
+    pc2Val = zRow.reduce((s, v, i) => s + v * pc2Vec[i], 0);
+  }
+
+  // 4. Prescriptive Action Generation
+  let actionText, actionColor, actionBg, actionBorder;
+  if (evaluation.health_status === "Critical") {
+    if (input.vibration >= THRESHOLDS.vibration.crit) {
+      actionText = "EMERGENCY TRIP RECOMMENDED: Critical bearing degradation / high mechanical looseness. Disconnect motor, inspect bearing raceways & balance rotor.";
+    } else if (input.temperature >= THRESHOLDS.temperature.crit) {
+      actionText = "THERMAL PROTECTION TRIP: Immediate shutdown required to prevent stator winding insulation burnout. Inspect cooling blower and thermal dissipation fins.";
+    } else {
+      actionText = "ELECTRICAL OVERLOAD INTERVENTION: Isolate motor feeder, check line voltage unbalance and check for rotor bar breakage or severe phase overload.";
+    }
+    actionColor = "var(--status-critical)";
+    actionBg = "rgba(239, 68, 68, 0.12)";
+    actionBorder = "var(--status-critical-border)";
+  } else if (evaluation.health_status === "Warning") {
+    actionText = "SCHEDULE PREDICTIVE MAINTENANCE: Elevated operational stress detected. Inspect lubricant condition, clean air intake filters, and re-torque mounting foundation bolts.";
+    actionColor = "var(--status-warning)";
+    actionBg = "rgba(245, 158, 11, 0.12)";
+    actionBorder = "var(--status-warning-border)";
+  } else {
+    actionText = "OPERATION APPROVED: All 5 sensor parameters are inside the ISO 10816-3 normal envelope. Continue regular continuous online condition monitoring.";
+    actionColor = "var(--status-healthy)";
+    actionBg = "rgba(16, 185, 129, 0.1)";
+    actionBorder = "var(--status-healthy-border)";
+  }
+
+  // 5. Update UI Result Elements
+  const statusBadge = document.getElementById("predStatusBadge");
+  if (statusBadge) {
+    statusBadge.textContent = evaluation.health_status.toUpperCase();
+    statusBadge.className = `badge-status badge-${evaluation.health_status.toLowerCase()}`;
+  }
+
+  const headline = document.getElementById("predHeadline");
+  if (headline) {
+    if (evaluation.health_status === "Critical") {
+      headline.textContent = "Critical Subsystem Fault Detected";
+      headline.style.color = "var(--status-critical)";
+    } else if (evaluation.health_status === "Warning") {
+      headline.textContent = "Elevated Operational Advisory";
+      headline.style.color = "var(--status-warning)";
+    } else {
+      headline.textContent = "Motor Operating Optimally";
+      headline.style.color = "var(--text-primary)";
+    }
+  }
+
+  const resultCard = document.getElementById("predictResultCard");
+  const borderColor = evaluation.health_status === "Healthy" ? "var(--status-healthy)" : (evaluation.health_status === "Warning" ? "var(--status-warning)" : "var(--status-critical)");
+  if (resultCard) {
+    resultCard.style.borderLeftColor = borderColor;
+  }
+
+  const riskScoreEl = document.getElementById("predRiskScore");
+  if (riskScoreEl) riskScoreEl.textContent = evaluation.risk_index;
+
+  const riskProgress = document.getElementById("predRiskProgress");
+  if (riskProgress) {
+    riskProgress.style.width = `${Math.min(100, Math.max(3, evaluation.risk_index))}%`;
+    riskProgress.style.backgroundColor = borderColor;
+  }
+
+  const riskCat = document.getElementById("predRiskCategory");
+  if (riskCat) {
+    if (evaluation.risk_index >= 65) {
+      riskCat.textContent = "CRITICAL ACTION REQUIRED";
+      riskCat.className = "risk-cat-critical";
+    } else if (evaluation.risk_index >= 30) {
+      riskCat.textContent = "ELEVATED ADVISORY ZONE";
+      riskCat.className = "risk-cat-warning";
+    } else {
+      riskCat.textContent = "SAFE OPERATING ENVELOPE";
+      riskCat.className = "risk-cat-healthy";
+    }
+  }
+
+  const anomalyFlag = document.getElementById("predAnomalyFlag");
+  if (anomalyFlag) {
+    if (evaluation.is_anomaly) {
+      anomalyFlag.innerHTML = `<span style="color: var(--status-critical); font-weight: 800;">⚠️ Anomaly Detected (Outlier)</span>`;
+    } else {
+      anomalyFlag.innerHTML = `<span style="color: var(--status-healthy); font-weight: 700;">✓ Normal (In-Bounds)</span>`;
+    }
+  }
+
+  const isoEl = document.getElementById("predIsoStatus");
+  if (isoEl) {
+    isoEl.textContent = isoText;
+    isoEl.style.color = isoColor;
+  }
+
+  const thermEl = document.getElementById("predThermalStatus");
+  if (thermEl) {
+    thermEl.textContent = thermText;
+    thermEl.style.color = thermColor;
+  }
+
+  const pcaCoordsEl = document.getElementById("predPcaCoords");
+  if (pcaCoordsEl) {
+    pcaCoordsEl.textContent = `PC1: ${pc1Val >= 0 ? '+' : ''}${pc1Val.toFixed(2)} | PC2: ${pc2Val >= 0 ? '+' : ''}${pc2Val.toFixed(2)}`;
+  }
+
+  const verdictEl = document.getElementById("predVerdictText");
+  if (verdictEl) verdictEl.textContent = evaluation.diagnosis_reason;
+
+  const actionBox = document.getElementById("predictActionBox");
+  if (actionBox) {
+    actionBox.style.backgroundColor = actionBg;
+    actionBox.style.borderColor = actionBorder;
+    const actionTitle = actionBox.querySelector(".action-title");
+    if (actionTitle) actionTitle.style.color = actionColor;
+    const actionTextEl = document.getElementById("predActionText");
+    if (actionTextEl) actionTextEl.textContent = actionText;
+  }
+
+  return { ...input, ...evaluation, timestamp: new Date().toLocaleTimeString() };
+}
+
+function injectCustomToLiveSCADA() {
+  const result = calculateAndPredictCustom();
+  const nextIdx = state.telemetryData.length + 1;
+  const newRow = {
+    index: nextIdx,
+    ...result
+  };
+
+  state.telemetryData.push(newRow);
+  if (state.telemetryData.length > state.maxHistory) {
+    state.telemetryData.shift();
+  }
+
+  updateUI();
+
+  // Show confirmation banner
+  const notice = document.getElementById("injectSuccessNotice");
+  if (notice) {
+    notice.style.display = "block";
+    setTimeout(() => {
+      notice.style.display = "none";
+    }, 3200);
+  }
 }
 
 // Initial Bootstrap
@@ -865,6 +1164,9 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   updateUI();
+
+  // Initialize prediction card with default inputs
+  calculateAndPredictCustom();
 
   // Start real-time 1 Hz stream
   state.timerId = setInterval(tick, state.streamInterval);

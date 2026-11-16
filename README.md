@@ -66,17 +66,23 @@ Built strictly according to the **60-30-10 Color Theory Rule** for industrial SC
 
 ## 🎛️ Interactive Features
 
-1. **5 SCADA Radial Dial Instruments:** Custom HTML5 Canvas gauges showing live needles sweeping across ISO 10816-3 threshold arcs.
-2. **Interactive Fault Injection:** Dropdown on top bar allowing you to simulate:
+1. **Manual Sensor Input & AI Fault Predictor Studio:** Custom interactive input panel with dual-bound sliders and number boxes for Vibration, Temperature, Current, Voltage, and Speed. Includes:
+   - **Instant AI Calculations:** Real-time 0–100 composite risk score, ISO 10816-3 vibration severity classification, Class B/F thermal limits, and multivariate anomaly detection.
+   - **PCA 2D Projection:** Mathematically projects the custom input point onto PC1 and PC2 axes.
+   - **Prescriptive Maintenance Action:** Generates root-cause diagnosis and actionable industrial advice (greasing, alignment, thermal fin cleaning, or emergency trip).
+   - **Quick Test Presets:** 1-click test scenarios for *Healthy Baseline*, *Bearing Damage*, *High Overheating*, and *Electrical Voltage Sag*.
+   - **Send to Live SCADA Dials & Audit Table:** Injects the custom user reading directly into the live dials, time-series charts, and audit table.
+2. **5 SCADA Radial Dial Instruments:** Custom HTML5 Canvas gauges showing live needles sweeping across ISO 10816-3 threshold arcs.
+3. **Interactive Fault Injection:** Dropdown on top bar allowing you to simulate:
    - 🟢 *Normal Baseline*
    - 🔴 *Bearing Damage* (High Vibration surge)
    - 🟡 *Thermal Overheating* (Stator coil heat runaway)
    - 🔴 *Electrical Overload* (Voltage dip with high surge current)
-3. **Live 1Hz Telemetry Timeline:** Chart.js streaming chart with multi-sensor toggle chips.
-4. **5×5 Pearson Cross-Correlation Grid:** Color-coded coefficient heatmap (-1.0 to +1.0) with interactive tooltip tooltips.
-5. **PCA 2D Cluster Scatter Plot:** JavaScript matrix engine calculating covariance, eigenvalues, eigenvectors, and projecting readings onto PC1 vs PC2.
-6. **Diagnostic Audit Table:** Real-time log with search bar and filter dropdown.
-7. **Instant CSV Report:** One-click **"Export CSV"** button generating downloadable telemetry reports on the fly.
+4. **Live 1Hz Telemetry Timeline:** Chart.js streaming chart with multi-sensor toggle chips.
+5. **5×5 Pearson Cross-Correlation Grid:** Color-coded coefficient heatmap (-1.0 to +1.0) with interactive tooltip tooltips.
+6. **PCA 2D Cluster Scatter Plot:** JavaScript matrix engine calculating covariance, eigenvalues, eigenvectors, and projecting readings onto PC1 vs PC2.
+7. **Diagnostic Audit Table:** Real-time log with search bar and filter dropdown.
+8. **Instant CSV Report:** One-click **"Export CSV"** button generating downloadable telemetry reports on the fly.
 
 ---
 
