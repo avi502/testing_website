@@ -11,6 +11,9 @@ function findPython() {
   const isWin = process.platform === 'win32';
   const candidates = [];
 
+  const venvPy = path.join(__dirname, '..', '.venv', 'Scripts', 'python.exe');
+  candidates.push(venvPy);
+
   if (isWin && process.env.LOCALAPPDATA) {
     candidates.push(path.join(process.env.LOCALAPPDATA, 'Microsoft', 'WindowsApps', 'python3.12.exe'));
     candidates.push(path.join(process.env.LOCALAPPDATA, 'Microsoft', 'WindowsApps', 'python.exe'));

@@ -3,6 +3,7 @@
  * scripts/serve.js
  * Zero-dependency native Node.js HTTP dev server.
  * Serves the Dark Mode web dashboard for 'npm run dev'.
+ * Auto-detects port conflicts (EADDRINUSE) and increments port automatically.
  */
 
 const http = require('http');
@@ -10,7 +11,9 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-const PORT = process.env.PORT || 3000;
+let currentPort = parseInt(process.env.PORT, 10) || 3000;
+const MAX_PORT_ATTEMPTS = 20;
+let attempts = 0;
 const ROOT = path.join(__dirname, '..');
 
 const MIME_TYPES = {
@@ -57,16 +60,42 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  const url = `http://localhost:${PORT}`;
-  console.log('\x1b[36m%s\x1b[0m', '=============================================================');
-  console.log('\x1b[36m%s\x1b[0m', '  ⚡ MotorGuard AI: Dark Mode Predictive Maintenance UI     ');
-  console.log('\x1b[36m%s\x1b[0m', '  🌐 Ready for GitHub Pages & Local Development              ');
-  console.log('\x1b[36m%s\x1b[0m', '=============================================================');
-  console.log('\x1b[32m%s\x1b[0m', `✓ Server live at: ${url}`);
-  console.log('\x1b[90m%s\x1b[0m', 'Press Ctrl+C to stop.\n');
-
-  // Open browser automatically
-  const startCmd = process.platform === 'win32' ? `start ${url}` : (process.platform === 'darwin' ? `open ${url}` : `xdg-open ${url}`);
-  exec(startCmd, () => {});
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    attempts++;
+    if (attempts < MAX_PORT_ATTEMPTS) {
+      console.log('\x1b[33m%s\x1b[0m', `⚠ Port ${currentPort} is currently occupied. Auto-switching to port ${currentPort + 1}...`);
+      currentPort++;
+      setTimeout(() => {
+        startServer(currentPort);
+      }, 150);
+      return;
+    }
+    console.error(`\x1b[31mError: Could not find an open port after ${MAX_PORT_ATTEMPTS} attempts.\x1b[0m`);
+    process.exit(1);
+  } else {
+    console.error('\x1b[31mServer error:\x1b[0m', err.message);
+    process.exit(1);
+  }
 });
+
+function startServer(port) {
+  server.listen(port, () => {
+    const url = `http://localhost:${port}`;
+    console.log('\x1b[36m%s\x1b[0m', '=============================================================');
+    console.log('\x1b[36m%s\x1b[0m', '  ⚡ MotorGuard AI: Dark Mode Predictive Maintenance UI     ');
+    console.log('\x1b[36m%s\x1b[0m', '  🌐 Ready for GitHub Pages & Local Development              ');
+    console.log('\x1b[36m%s\x1b[0m', '=============================================================');
+    console.log('\x1b[32m%s\x1b[0m', `✓ Server live at: ${url}`);
+    if (port !== 3000) {
+      console.log('\x1b[33m%s\x1b[0m', `ℹ (Port 3000 was in use by another app, auto-assigned to ${port})`);
+    }
+    console.log('\x1b[90m%s\x1b[0m', 'Press Ctrl+C in this terminal to stop the server.\n');
+
+    // Open browser automatically
+    const startCmd = process.platform === 'win32' ? `start ${url}` : (process.platform === 'darwin' ? `open ${url}` : `xdg-open ${url}`);
+    exec(startCmd, () => {});
+  });
+}
+
+startServer(currentPort);
