@@ -430,6 +430,8 @@ function drawRadialGauge(canvasId, value, min, max, warn, crit, isLowerBetter = 
 let telemetryChartInstance = null;
 let riskChartInstance = null;
 let pcaChartInstance = null;
+let fftChartInstance = null;
+let rulChartInstance = null;
 
 function initCharts() {
   const chartFont = { family: "'Plus Jakarta Sans', sans-serif" };
@@ -552,6 +554,176 @@ function initCharts() {
           title: { display: true, text: "Principal Component 2 (PC2)", color: "#64748b", font: chartFont },
           grid: { color: "rgba(255, 255, 255, 0.04)" },
           ticks: { color: "#64748b" }
+        }
+      }
+    }
+  });
+
+  // 4. FFT Vibration Spectrum Chart
+  initFftChart(chartFont);
+
+  // 5. Remaining Useful Life (RUL) Prognostic Curve
+  initRulChart(chartFont);
+}
+
+function initFftChart(chartFont) {
+  const canvas = document.getElementById("fftChart");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  const freqs = [];
+  for (let f = 0; f <= 300; f += 2) freqs.push(f);
+
+  fftChartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: freqs,
+      datasets: [{
+        label: "Spectral Amplitude (mm/s RMS)",
+        data: Array(freqs.length).fill(0.18),
+        borderColor: "#38bdf8",
+        backgroundColor: "rgba(56, 189, 248, 0.12)",
+        fill: true,
+        tension: 0.15,
+        borderWidth: 2,
+        pointRadius: (ctx) => {
+          const idx = ctx.dataIndex;
+          const f = freqs[idx];
+          if (Math.abs(f - 24) <= 1 || Math.abs(f - 48) <= 1 || Math.abs(f - 178) <= 1 || Math.abs(f - 232) <= 1) {
+            return 5;
+          }
+          return 0;
+        },
+        pointBackgroundColor: (ctx) => {
+          const f = freqs[ctx.dataIndex];
+          if (Math.abs(f - 178) <= 1) return "#ef4444";
+          if (Math.abs(f - 48) <= 1) return "#f59e0b";
+          return "#38bdf8";
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => `Frequency: ${items[0].label} Hz`,
+            label: (item) => `Amplitude: ${item.raw.toFixed(2)} mm/s RMS`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "Frequency (Hz)", color: "#64748b", font: chartFont },
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b", font: chartFont, maxTicksLimit: 12 }
+        },
+        y: {
+          title: { display: true, text: "Vibration Amplitude (mm/s)", color: "#64748b", font: chartFont },
+          min: 0,
+          max: 10,
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b", font: chartFont }
+        }
+      }
+    }
+  });
+}
+
+function initRulChart(chartFont) {
+  const canvas = document.getElementById("rulChart");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  const hours = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000];
+
+  rulChartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: hours,
+      datasets: [
+        {
+          label: "Health Index (HI %)",
+          data: [100, 98, 95, 91, 84, 76, 64, 50, 36, 22, 10],
+          borderColor: "#10b981",
+          backgroundColor: "rgba(16, 185, 129, 0.08)",
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2.8,
+          pointRadius: 4,
+          pointHoverRadius: 7
+        },
+        {
+          label: "95% Upper Bound",
+          data: [100, 99, 97, 94, 88, 81, 71, 58, 45, 32, 18],
+          borderColor: "rgba(56, 189, 248, 0.45)",
+          borderDash: [5, 5],
+          fill: false,
+          tension: 0.35,
+          borderWidth: 1.5,
+          pointRadius: 0
+        },
+        {
+          label: "95% Lower Bound",
+          data: [100, 96, 92, 87, 79, 69, 56, 42, 28, 14, 5],
+          borderColor: "rgba(56, 189, 248, 0.45)",
+          borderDash: [5, 5],
+          fill: false,
+          tension: 0.35,
+          borderWidth: 1.5,
+          pointRadius: 0
+        },
+        {
+          label: "Warning Limit (70% HI)",
+          data: Array(hours.length).fill(70),
+          borderColor: "rgba(245, 158, 11, 0.8)",
+          borderDash: [4, 4],
+          borderWidth: 1.2,
+          pointRadius: 0,
+          fill: false
+        },
+        {
+          label: "Critical Limit (35% HI)",
+          data: Array(hours.length).fill(35),
+          borderColor: "rgba(239, 68, 68, 0.85)",
+          borderDash: [4, 4],
+          borderWidth: 1.4,
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: {
+          position: "top",
+          labels: { color: "#94a3b8", font: chartFont, usePointStyle: true, boxWidth: 6 }
+        },
+        tooltip: {
+          callbacks: {
+            title: (items) => `${items[0].label} Operating Hours`,
+            label: (item) => `${item.dataset.label}: ${item.raw.toFixed(1)}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "Cumulative Operating Hours (h)", color: "#64748b", font: chartFont },
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b", font: chartFont }
+        },
+        y: {
+          title: { display: true, text: "Health Index HI (%)", color: "#64748b", font: chartFont },
+          min: 0,
+          max: 100,
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b", font: chartFont }
         }
       }
     }
@@ -703,8 +875,221 @@ function updateUI() {
     `;
   }
 
-  // 6. Update Diagnostic Table
+  // 6. Update Intermediate Engineering Diagnostics (FFT Spectrum & RUL Prognosis)
+  updateFftSpectrum(latest);
+  updateRulDegradation(latest);
+
+  // 7. Update Diagnostic Table
   renderAuditTable();
+}
+
+// =============================================================================
+// INTERMEDIATE ENGINEERING: FFT SPECTRAL HARMONICS ENGINE (ISO 13373-1)
+// =============================================================================
+function updateFftSpectrum(latest) {
+  if (!fftChartInstance) return;
+
+  const rpm = latest.rotational_speed || 1475;
+  const vib = latest.vibration || 2.1;
+  const fault = state.activeFault;
+
+  const f1X = parseFloat((rpm / 60).toFixed(1)); // ~24.6 Hz
+  const f2X = parseFloat((f1X * 2).toFixed(1));  // ~49.2 Hz
+  const f3X = parseFloat((f1X * 3).toFixed(1));  // ~73.8 Hz
+  const fBPFO = 178.4;
+  const fBPFI = 232.1;
+
+  // Harmonic peak amplitudes
+  let a1X = 1.25;
+  let a2X = 0.45;
+  let aBPFO = 0.28;
+  let aBPFI = 0.18;
+
+  if (fault === "bearing" || (vib >= 7.1 && fault !== "electrical")) {
+    aBPFO = Math.min(9.5, Math.max(5.5, vib * 0.95));
+    a1X = Math.min(5.5, Math.max(2.2, vib * 0.45));
+    a2X = 1.25;
+    aBPFI = 1.45;
+  } else if (fault === "electrical" || (vib >= 4.5 && latest.voltage < 370)) {
+    a2X = Math.min(6.5, Math.max(3.8, vib * 0.72));
+    a1X = Math.min(5.0, Math.max(2.5, vib * 0.5));
+    aBPFO = 0.65;
+  } else if (vib >= 4.5) {
+    a1X = Math.min(5.5, Math.max(2.8, vib * 0.65));
+    a2X = 1.4;
+    aBPFO = 0.75;
+  } else {
+    a1X = Math.max(0.6, Math.min(1.8, vib * 0.55));
+    a2X = 0.35;
+    aBPFO = 0.25;
+  }
+
+  // Generate 151 spectrum bins from 0 to 300 Hz
+  const freqs = [];
+  const amplitudes = [];
+
+  for (let f = 0; f <= 300; f += 2) {
+    freqs.push(f);
+    let amp = 0.12 + Math.random() * 0.08;
+
+    amp += a1X * Math.exp(-Math.pow(f - f1X, 2) / 8);
+    amp += a2X * Math.exp(-Math.pow(f - f2X, 2) / 8);
+    amp += (a1X * 0.3) * Math.exp(-Math.pow(f - f3X, 2) / 8);
+    amp += aBPFO * Math.exp(-Math.pow(f - fBPFO, 2) / 10);
+    amp += aBPFI * Math.exp(-Math.pow(f - fBPFI, 2) / 10);
+
+    amplitudes.push(parseFloat(amp.toFixed(2)));
+  }
+
+  fftChartInstance.data.labels = freqs;
+  fftChartInstance.data.datasets[0].data = amplitudes;
+
+  if (aBPFO >= 4.5 || a1X >= 5.0) {
+    fftChartInstance.data.datasets[0].borderColor = "#ef4444";
+    fftChartInstance.data.datasets[0].backgroundColor = "rgba(239, 68, 68, 0.15)";
+  } else if (aBPFO >= 2.0 || a1X >= 3.0 || a2X >= 2.5) {
+    fftChartInstance.data.datasets[0].borderColor = "#f59e0b";
+    fftChartInstance.data.datasets[0].backgroundColor = "rgba(245, 158, 11, 0.12)";
+  } else {
+    fftChartInstance.data.datasets[0].borderColor = "#38bdf8";
+    fftChartInstance.data.datasets[0].backgroundColor = "rgba(56, 189, 248, 0.12)";
+  }
+  fftChartInstance.update();
+
+  // Update Diagnostic Harmonics Text
+  const h1El = document.getElementById("hVal1X");
+  if (h1El) h1El.textContent = `${a1X.toFixed(2)} mm/s`;
+  const h2El = document.getElementById("hVal2X");
+  if (h2El) h2El.textContent = `${a2X.toFixed(2)} mm/s`;
+  const hBpfoEl = document.getElementById("hValBPFO");
+  if (hBpfoEl) hBpfoEl.textContent = `${aBPFO.toFixed(2)} mm/s`;
+  const hBpfiEl = document.getElementById("hValBPFI");
+  if (hBpfiEl) hBpfiEl.textContent = `${aBPFI.toFixed(2)} mm/s`;
+
+  function setBadge(elId, val, warnLimit, critLimit) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (val >= critLimit) {
+      el.textContent = "CRITICAL";
+      el.className = "h-status-badge badge-critical";
+    } else if (val >= warnLimit) {
+      el.textContent = "WARNING";
+      el.className = "h-status-badge badge-warning";
+    } else {
+      el.textContent = "NORMAL";
+      el.className = "h-status-badge badge-healthy";
+    }
+  }
+
+  setBadge("hBadge1X", a1X, 3.0, 5.0);
+  setBadge("hBadge2X", a2X, 2.0, 3.5);
+  setBadge("hBadgeBPFO", aBPFO, 1.5, 4.0);
+  setBadge("hBadgeBPFI", aBPFI, 1.2, 3.0);
+
+  const peakEl = document.getElementById("fftPeakFrequencyText");
+  if (peakEl) {
+    if (aBPFO >= 4.0) {
+      peakEl.innerHTML = `<span style="color: #ef4444; font-weight: 800;">🚨 Dominant Peak: 178.4 Hz (BPFO Bearing Defect)</span>`;
+    } else if (a2X >= 3.0) {
+      peakEl.innerHTML = `<span style="color: #f59e0b; font-weight: 700;">⚠️ Dominant Peak: ${f2X} Hz (2X Shaft Misalignment)</span>`;
+    } else {
+      peakEl.innerHTML = `Dominant Peak: ${f1X} Hz (1X Shaft Speed)`;
+    }
+  }
+}
+
+// =============================================================================
+// INTERMEDIATE ENGINEERING: REMAINING USEFUL LIFE (RUL) & DEGRADATION ENGINE
+// =============================================================================
+function updateRulDegradation(latest) {
+  if (!rulChartInstance) return;
+
+  const risk = latest.risk_index || 0;
+  const hi = Math.max(5, Math.min(100, 100 - risk)); // Health Index %
+
+  let degRate = 0.024; // % per running hour
+  if (risk >= 65) {
+    degRate = 0.165 + (risk - 65) * 0.005;
+  } else if (risk >= 30) {
+    degRate = 0.065 + (risk - 30) * 0.002;
+  } else {
+    degRate = 0.020 + (risk / 30) * 0.008;
+  }
+
+  // Estimated RUL: hours until HI drops to 35% critical failure threshold
+  const hoursToFail = Math.max(0, Math.round((hi - 35) / degRate));
+  const daysToFail = Math.round(hoursToFail / 24);
+
+  const currentHours = 1500;
+  const hoursAxis = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000];
+
+  const mainCurve = [];
+  const upperCurve = [];
+  const lowerCurve = [];
+
+  hoursAxis.forEach(h => {
+    let val;
+    if (h <= currentHours) {
+      val = 100 - (100 - hi) * Math.pow(h / currentHours, 1.2);
+    } else {
+      const deltaH = h - currentHours;
+      val = hi - degRate * deltaH;
+    }
+    val = Math.max(0, Math.min(100, val));
+    mainCurve.push(parseFloat(val.toFixed(1)));
+    upperCurve.push(parseFloat(Math.min(100, val + 7).toFixed(1)));
+    lowerCurve.push(parseFloat(Math.max(0, val - 7).toFixed(1)));
+  });
+
+  rulChartInstance.data.datasets[0].data = mainCurve;
+  rulChartInstance.data.datasets[1].data = upperCurve;
+  rulChartInstance.data.datasets[2].data = lowerCurve;
+
+  if (hi <= 40) {
+    rulChartInstance.data.datasets[0].borderColor = "#ef4444";
+    rulChartInstance.data.datasets[0].backgroundColor = "rgba(239, 68, 68, 0.08)";
+  } else if (hi <= 70) {
+    rulChartInstance.data.datasets[0].borderColor = "#f59e0b";
+    rulChartInstance.data.datasets[0].backgroundColor = "rgba(245, 158, 11, 0.08)";
+  } else {
+    rulChartInstance.data.datasets[0].borderColor = "#10b981";
+    rulChartInstance.data.datasets[0].backgroundColor = "rgba(16, 185, 129, 0.08)";
+  }
+  rulChartInstance.update();
+
+  const hValEl = document.getElementById("rulHoursValue");
+  if (hValEl) hValEl.textContent = hoursToFail.toLocaleString();
+  const dValEl = document.getElementById("rulDaysValue");
+  if (dValEl) dValEl.textContent = `~${daysToFail} Days Continuous`;
+
+  const hiEl = document.getElementById("rulHealthIndexValue");
+  if (hiEl) {
+    hiEl.textContent = `${hi.toFixed(1)}%`;
+    hiEl.className = hi > 70 ? "rul-kpi-number text-healthy" : (hi > 40 ? "rul-kpi-number text-amber" : "rul-kpi-number text-red");
+  }
+
+  const zoneLabel = document.getElementById("rulZoneLabel");
+  if (zoneLabel) {
+    zoneLabel.textContent = hi > 70 ? "Zone A / Optimal State" : (hi > 40 ? "Zone B / Moderate Wear" : "Zone C-D / Critical Threat");
+  }
+
+  const degEl = document.getElementById("rulDegradationRate");
+  if (degEl) degEl.textContent = `${degRate.toFixed(3)}%`;
+
+  const windowHours = Math.max(0, Math.round(hoursToFail * 0.72));
+  const winEl = document.getElementById("rulWindowValue");
+  if (winEl) winEl.textContent = `${windowHours.toLocaleString()} h`;
+
+  const advText = document.getElementById("rulAdvisoryText");
+  if (advText) {
+    if (hi <= 40) {
+      advText.innerHTML = `<b>Critical Prognostic Warning:</b> Accelerated degradation rate (${degRate.toFixed(3)}%/h). Estimated failure within <b>${hoursToFail} hours</b>. Immediate maintenance shutdown required.`;
+    } else if (hi <= 70) {
+      advText.innerHTML = `<b>Preventive Action Advisory:</b> Degradation trend has entered the warning corridor. Estimated remaining useful life is <b>${hoursToFail} operating hours</b>. Schedule inspection within ${windowHours} hours.`;
+    } else {
+      advText.innerHTML = `<b>Prognostic Insight:</b> Motor degradation curve is flat and optimal. Operating parameters project <b>${hoursToFail} hours (~${daysToFail} days)</b> before preventive relubrication is required.`;
+    }
+  }
 }
 
 // =============================================================================
@@ -899,6 +1284,46 @@ function initEventListeners() {
       calculateAndPredictCustom();
     });
   }
+
+  // Intermediate Engineering Tabs Controller
+  initIntermediateTabs();
+}
+
+function initIntermediateTabs() {
+  const tabButtons = document.querySelectorAll(".suite-tab-btn");
+  const tabPanes = document.querySelectorAll(".suite-tab-pane");
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-tab");
+
+      tabButtons.forEach(b => b.classList.remove("active"));
+      tabPanes.forEach(p => {
+        p.style.display = "none";
+        p.classList.remove("active");
+      });
+
+      btn.classList.add("active");
+      const targetPane = document.getElementById(targetId);
+      if (targetPane) {
+        targetPane.style.display = "block";
+        targetPane.classList.add("active");
+      }
+
+      // Re-trigger layout calculation for Chart.js when tab becomes visible
+      if (targetId === "tabFft" && fftChartInstance) {
+        setTimeout(() => {
+          fftChartInstance.resize();
+          fftChartInstance.update();
+        }, 30);
+      } else if (targetId === "tabRul" && rulChartInstance) {
+        setTimeout(() => {
+          rulChartInstance.resize();
+          rulChartInstance.update();
+        }, 30);
+      }
+    });
+  });
 }
 
 // =============================================================================

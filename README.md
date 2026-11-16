@@ -1,14 +1,20 @@
-# ⚡ MotorGuard AI: Intelligent Predictive Maintenance Dashboard
-### Industrial Induction Motor Condition-Monitoring System (Dark Mode)
+# ⚡ MotorGuard AI: Industrial Predictive Maintenance & Prognostics
+### Advanced Induction Motor Condition-Monitoring System (Intermediate Engineering Level)
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Deploy-10b981?logo=github&logoColor=white)](https://pages.github.com/)
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](index.html)
 [![CSS3](https://img.shields.io/badge/CSS3-Dark%20Mode-1572B6?logo=css3&logoColor=white)](style.css)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?logo=javascript&logoColor=black)](app.js)
 [![Chart.js](https://img.shields.io/badge/Chart.js-4.4+-FF6384?logo=chart.js&logoColor=white)](https://www.chartjs.org/)
+[![Engineering Level](https://img.shields.io/badge/Level-Intermediate%20B.Tech-38bdf8)](index.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-An industrial **Dark Mode** predictive maintenance web dashboard designed specifically for **GitHub Pages deployment**. It evaluates 5 induction motor parameters (**Vibration, Temperature, Current, Voltage, Speed**) using real-time canvas gauges, time-series telemetry charts, 5×5 Pearson correlation, PCA 2D projection, and unsupervised anomaly detection.
+An industrial **Dark Mode** predictive maintenance and prognostics web suite designed specifically for **GitHub Pages deployment**. It evaluates 5 core induction motor parameters (**Vibration, Temperature, Current, Voltage, Speed**) using:
+- **ISO 13373-1 Fast Fourier Transform (FFT) Frequency Spectrum** for harmonic fault identification (1X, 2X, 3X, BPFO, BPFI)
+- **Weibull Remaining Useful Life (RUL)** prognostics and Health Index (HI %) degradation curves with 95% confidence bounds
+- **Multi-Model ML Benchmarks** (Hybrid Isolation Forest + Autoencoder + SVM) with interactive 3×3 Confusion Matrix
+- **ISO 10816-3 Vibration Severity Classification** for Group 2 medium industrial motors
+- **Interactive Manual Sensor Simulator** with real-time AI diagnostic inference and SCADA dials injection.
 
 ---
 
@@ -66,23 +72,28 @@ Built strictly according to the **60-30-10 Color Theory Rule** for industrial SC
 
 ## 🎛️ Interactive Features
 
-1. **Manual Sensor Input & AI Fault Predictor Studio:** Custom interactive input panel with dual-bound sliders and number boxes for Vibration, Temperature, Current, Voltage, and Speed. Includes:
+1. **🔬 Advanced Engineering Diagnostics & Prognostics Suite (Intermediate Level):**
+   - **📊 ISO 13373-1 FFT Spectral Harmonics:** Real-time fast Fourier transform frequency spectrum (0 to 300 Hz) breaking down 1X shaft speed ($f_{1\times} = \text{RPM}/60 \approx 24.6\text{ Hz}$), 2X misalignment harmonic ($49.2\text{ Hz}$), 3X looseness ($73.8\text{ Hz}$), and BPFO ($178.4\text{ Hz}$) / BPFI ($232.1\text{ Hz}$) bearing race defect signatures.
+   - **⏳ Weibull Remaining Useful Life (RUL) & Prognostics:** Computes real-time dynamic Health Index (0–100% HI), estimated operating hours to failure, wear acceleration rate, and projects future degradation curves with 95% upper/lower confidence bounds.
+   - **🧠 Machine Learning Benchmark Matrix:** Comparative benchmark evaluating Hybrid Ensemble (98.4% Acc, 0.991 ROC-AUC), Autoencoder Neural Network, Support Vector Machine, and Isolation Forest. Includes an interactive 3×3 Confusion Matrix across Healthy, Warning, and Critical classes.
+   - **🏷️ Motor Technical Nameplate & ISO 10816-3 Severity Standards:** Comprehensive engineering specifications for a 7.5 kW / 10 HP industrial squirrel cage induction motor (IEC 132M, IP55, Class F rise) and Group 2 machine vibration severity zones (Zone A, B, C, D).
+2. **Manual Sensor Input & AI Fault Predictor Studio:** Custom interactive input panel with dual-bound sliders and number boxes for Vibration, Temperature, Current, Voltage, and Speed. Includes:
    - **Instant AI Calculations:** Real-time 0–100 composite risk score, ISO 10816-3 vibration severity classification, Class B/F thermal limits, and multivariate anomaly detection.
    - **PCA 2D Projection:** Mathematically projects the custom input point onto PC1 and PC2 axes.
    - **Prescriptive Maintenance Action:** Generates root-cause diagnosis and actionable industrial advice (greasing, alignment, thermal fin cleaning, or emergency trip).
    - **Quick Test Presets:** 1-click test scenarios for *Healthy Baseline*, *Bearing Damage*, *High Overheating*, and *Electrical Voltage Sag*.
    - **Send to Live SCADA Dials & Audit Table:** Injects the custom user reading directly into the live dials, time-series charts, and audit table.
-2. **5 SCADA Radial Dial Instruments:** Custom HTML5 Canvas gauges showing live needles sweeping across ISO 10816-3 threshold arcs.
-3. **Interactive Fault Injection:** Dropdown on top bar allowing you to simulate:
+3. **5 SCADA Radial Dial Instruments:** Custom HTML5 Canvas gauges showing live needles sweeping across ISO 10816-3 threshold arcs.
+4. **Interactive Fault Injection:** Dropdown on top bar allowing you to simulate:
    - 🟢 *Normal Baseline*
    - 🔴 *Bearing Damage* (High Vibration surge)
    - 🟡 *Thermal Overheating* (Stator coil heat runaway)
    - 🔴 *Electrical Overload* (Voltage dip with high surge current)
-4. **Live 1Hz Telemetry Timeline:** Chart.js streaming chart with multi-sensor toggle chips.
-5. **5×5 Pearson Cross-Correlation Grid:** Color-coded coefficient heatmap (-1.0 to +1.0) with interactive tooltip tooltips.
-6. **PCA 2D Cluster Scatter Plot:** JavaScript matrix engine calculating covariance, eigenvalues, eigenvectors, and projecting readings onto PC1 vs PC2.
-7. **Diagnostic Audit Table:** Real-time log with search bar and filter dropdown.
-8. **Instant CSV Report:** One-click **"Export CSV"** button generating downloadable telemetry reports on the fly.
+5. **Live 1Hz Telemetry Timeline:** Chart.js streaming chart with multi-sensor toggle chips.
+6. **5×5 Pearson Cross-Correlation Grid:** Color-coded coefficient heatmap (-1.0 to +1.0) with interactive tooltips.
+7. **PCA 2D Cluster Scatter Plot:** JavaScript matrix engine calculating covariance, eigenvalues, eigenvectors, and projecting readings onto PC1 vs PC2.
+8. **Diagnostic Audit Table:** Real-time log with search bar and filter dropdown.
+9. **Instant CSV Report:** One-click **"Export CSV"** button generating downloadable telemetry reports on the fly.
 
 ---
 

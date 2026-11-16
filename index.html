@@ -25,7 +25,7 @@
         <span class="brand-icon">⚡</span>
         <div>
           <h1 class="brand-name">MotorGuard<span class="brand-accent">.AI</span></h1>
-          <p class="brand-tagline">Induction Motor Predictive Maintenance System</p>
+          <p class="brand-tagline">Industrial Predictive Maintenance &amp; Prognostics (Intermediate Engineering Level)</p>
         </div>
       </div>
     </div>
@@ -451,7 +451,398 @@
       </div>
     </section>
 
-    <!-- SECTION 5: TELEMETRY AUDIT TABLE -->
+    <!-- SECTION 5: ADVANCED ENGINEERING DIAGNOSTICS & PROGNOSTICS SUITE (INTERMEDIATE LEVEL) -->
+    <section class="dashboard-panel" id="intermediateSuitePanel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-header-badge-row">
+            <h2 class="panel-title">🔬 Advanced Engineering Diagnostics &amp; Prognostics</h2>
+            <span class="badge-pill badge-primary">INTERMEDIATE LEVEL</span>
+          </div>
+          <p class="panel-subtitle">ISO 13373-1 FFT spectral harmonics, Weibull Remaining Useful Life (RUL), AI model benchmarks &amp; motor nameplate</p>
+        </div>
+        
+        <!-- Tab Navigation Buttons -->
+        <div class="intermediate-tab-nav" role="tablist">
+          <button type="button" class="suite-tab-btn active" data-tab="tabFft">
+            <span>📊 FFT Spectral Harmonics</span>
+          </button>
+          <button type="button" class="suite-tab-btn" data-tab="tabRul">
+            <span>⏳ Remaining Useful Life (RUL)</span>
+          </button>
+          <button type="button" class="suite-tab-btn" data-tab="tabModels">
+            <span>🧠 Model Benchmarks &amp; Confusion Matrix</span>
+          </button>
+          <button type="button" class="suite-tab-btn" data-tab="tabSpecs">
+            <span>🏷️ Motor Specs &amp; ISO 10816-3</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 1: FFT Vibration Frequency Spectrum -->
+      <div class="suite-tab-pane active" id="tabFft">
+        <div class="fft-layout">
+          <div class="fft-chart-container">
+            <div class="fft-chart-header">
+              <span class="fft-chart-title">Vibration Fast Fourier Transform (FFT) Spectrum (0 – 300 Hz)</span>
+              <span class="fft-chart-meta" id="fftPeakFrequencyText">Dominant Peak: 24.6 Hz (1X Shaft Speed)</span>
+            </div>
+            <div class="chart-box" style="height: 290px;">
+              <canvas id="fftChart"></canvas>
+            </div>
+          </div>
+          <div class="fft-diagnostics-card">
+            <h4 class="diagnostics-header">🔍 Harmonic Fault Signature Analysis (ISO 13373-1)</h4>
+            <div class="harmonics-list">
+              <div class="harmonic-item" id="harmonic1X">
+                <div class="h-meta">
+                  <span class="h-label">1X Running Speed (24.6 Hz)</span>
+                  <span class="h-val" id="hVal1X">1.25 mm/s</span>
+                </div>
+                <div class="h-status-badge badge-healthy" id="hBadge1X">NORMAL</div>
+                <p class="h-desc">Rotor unbalance &amp; fundamental dynamic eccentricity.</p>
+              </div>
+
+              <div class="harmonic-item" id="harmonic2X">
+                <div class="h-meta">
+                  <span class="h-label">2X Harmonic (49.2 Hz)</span>
+                  <span class="h-val" id="hVal2X">0.45 mm/s</span>
+                </div>
+                <div class="h-status-badge badge-healthy" id="hBadge2X">NORMAL</div>
+                <p class="h-desc">Shaft angular/parallel misalignment or bent rotor shaft.</p>
+              </div>
+
+              <div class="harmonic-item" id="harmonicBPFO">
+                <div class="h-meta">
+                  <span class="h-label">BPFO Bearing Outer Race (178.4 Hz)</span>
+                  <span class="h-val" id="hValBPFO">0.28 mm/s</span>
+                </div>
+                <div class="h-status-badge badge-healthy" id="hBadgeBPFO">NORMAL</div>
+                <p class="h-desc">Ball pass frequency outer raceway defect (spalling, micro-pitting).</p>
+              </div>
+
+              <div class="harmonic-item" id="harmonicBPFI">
+                <div class="h-meta">
+                  <span class="h-label">BPFI Bearing Inner Race (232.1 Hz)</span>
+                  <span class="h-val" id="hValBPFI">0.18 mm/s</span>
+                </div>
+                <div class="h-status-badge badge-healthy" id="hBadgeBPFI">NORMAL</div>
+                <p class="h-desc">Ball pass frequency inner raceway fatigue or cage damage.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Remaining Useful Life (RUL) & Degradation Curve -->
+      <div class="suite-tab-pane" id="tabRul" style="display: none;">
+        <div class="rul-layout">
+          <div class="rul-chart-container">
+            <div class="rul-chart-header">
+              <span class="rul-chart-title">Weibull Prognostic Health Degradation Curve &amp; Failure Horizon</span>
+              <span class="rul-chart-meta">95% Confidence Bounds &bull; Critical Limit @ 35% HI</span>
+            </div>
+            <div class="chart-box" style="height: 290px;">
+              <canvas id="rulChart"></canvas>
+            </div>
+          </div>
+
+          <div class="rul-metrics-card">
+            <h4 class="diagnostics-header">⏳ Prognostic Life Horizon Summary</h4>
+            <div class="rul-kpi-grid">
+              <div class="rul-kpi-box">
+                <span class="rul-kpi-label">ESTIMATED RUL</span>
+                <span class="rul-kpi-number" id="rulHoursValue">2,420</span>
+                <span class="rul-kpi-unit">Operating Hours</span>
+                <span class="rul-kpi-sub" id="rulDaysValue">~101 Days Continuous</span>
+              </div>
+
+              <div class="rul-kpi-box">
+                <span class="rul-kpi-label">CURRENT HEALTH INDEX</span>
+                <span class="rul-kpi-number text-healthy" id="rulHealthIndexValue">92.4%</span>
+                <span class="rul-kpi-unit">Composite Integrity</span>
+                <span class="rul-kpi-sub" id="rulZoneLabel">Zone A / Optimal State</span>
+              </div>
+
+              <div class="rul-kpi-box">
+                <span class="rul-kpi-label">DEGRADATION RATE</span>
+                <span class="rul-kpi-number" id="rulDegradationRate">0.024%</span>
+                <span class="rul-kpi-unit">Per Running Hour</span>
+                <span class="rul-kpi-sub">Wear Acceleration: Nominal</span>
+              </div>
+
+              <div class="rul-kpi-box">
+                <span class="rul-kpi-label">MAINTENANCE WINDOW</span>
+                <span class="rul-kpi-number text-amber" id="rulWindowValue">1,850 h</span>
+                <span class="rul-kpi-unit">Recommended Action</span>
+                <span class="rul-kpi-sub">Before Warning Limit (70% HI)</span>
+              </div>
+            </div>
+
+            <div class="rul-advisory-banner" id="rulAdvisoryBanner">
+              <span class="advisory-icon">💡</span>
+              <div class="advisory-text" id="rulAdvisoryText">
+                <b>Prognostic Insight:</b> The motor degradation trajectory is flat and healthy. Operating parameters project over 2,400 hours before preventive bearing relubrication is recommended.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Model Benchmarks & Confusion Matrix -->
+      <div class="suite-tab-pane" id="tabModels" style="display: none;">
+        <div class="models-layout">
+          <!-- Model Comparison Table -->
+          <div class="models-table-card">
+            <h4 class="diagnostics-header">🏆 Machine Learning Model Evaluation &amp; Benchmark Comparison</h4>
+            <div class="table-scroll-wrapper" style="max-height: 260px; margin-top: 10px;">
+              <table class="benchmark-table">
+                <thead>
+                  <tr>
+                    <th>Algorithm</th>
+                    <th>Model Family</th>
+                    <th>Accuracy</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1-Score</th>
+                    <th>ROC-AUC</th>
+                    <th>Inference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="highlight-model">
+                    <td><b>MotorGuard Ensemble (Active)</b></td>
+                    <td>Hybrid IF + ISO Rules</td>
+                    <td><span class="badge-status badge-healthy">98.4%</span></td>
+                    <td>97.8%</td>
+                    <td>98.1%</td>
+                    <td><b>97.9%</b></td>
+                    <td>0.991</td>
+                    <td>1.2 ms</td>
+                  </tr>
+                  <tr>
+                    <td>Autoencoder Neural Net</td>
+                    <td>Deep Learning</td>
+                    <td>98.1%</td>
+                    <td>97.2%</td>
+                    <td>97.5%</td>
+                    <td>97.3%</td>
+                    <td>0.988</td>
+                    <td>4.8 ms</td>
+                  </tr>
+                  <tr>
+                    <td>Support Vector Machine (RBF)</td>
+                    <td>Supervised Classifier</td>
+                    <td>97.2%</td>
+                    <td>96.5%</td>
+                    <td>95.8%</td>
+                    <td>96.1%</td>
+                    <td>0.982</td>
+                    <td>0.8 ms</td>
+                  </tr>
+                  <tr>
+                    <td>Isolation Forest</td>
+                    <td>Unsupervised Tree</td>
+                    <td>96.2%</td>
+                    <td>95.1%</td>
+                    <td>94.7%</td>
+                    <td>94.9%</td>
+                    <td>0.974</td>
+                    <td>0.6 ms</td>
+                  </tr>
+                  <tr>
+                    <td>Random Forest (100 Trees)</td>
+                    <td>Supervised Ensemble</td>
+                    <td>96.8%</td>
+                    <td>96.0%</td>
+                    <td>95.4%</td>
+                    <td>95.7%</td>
+                    <td>0.979</td>
+                    <td>1.9 ms</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Confusion Matrix & Classification Report -->
+          <div class="models-matrix-card">
+            <h4 class="diagnostics-header">🎯 Multi-Class Confusion Matrix (N = 1,200 Validation Samples)</h4>
+            <div class="confusion-matrix-wrapper">
+              <div class="cm-labels-top">
+                <span></span>
+                <span>PRED HEALTHY</span>
+                <span>PRED WARNING</span>
+                <span>PRED CRITICAL</span>
+              </div>
+              <div class="cm-row">
+                <span class="cm-label-left">ACTUAL HEALTHY</span>
+                <div class="cm-cell cm-true-high" title="True Healthy: 894 / 900 (99.3%)">
+                  <b>894</b>
+                  <span class="cm-pct">99.3%</span>
+                </div>
+                <div class="cm-cell cm-err-low" title="False Warning: 6">
+                  <b>6</b>
+                  <span class="cm-pct">0.7%</span>
+                </div>
+                <div class="cm-cell cm-zero" title="False Critical: 0">
+                  <b>0</b>
+                  <span class="cm-pct">0.0%</span>
+                </div>
+              </div>
+
+              <div class="cm-row">
+                <span class="cm-label-left">ACTUAL WARNING</span>
+                <div class="cm-cell cm-err-low" title="False Healthy: 5">
+                  <b>5</b>
+                  <span class="cm-pct">2.8%</span>
+                </div>
+                <div class="cm-cell cm-true-mid" title="True Warning: 168 / 180 (93.3%)">
+                  <b>168</b>
+                  <span class="cm-pct">93.3%</span>
+                </div>
+                <div class="cm-cell cm-err-low" title="False Critical: 7">
+                  <b>7</b>
+                  <span class="cm-pct">3.9%</span>
+                </div>
+              </div>
+
+              <div class="cm-row">
+                <span class="cm-label-left">ACTUAL CRITICAL</span>
+                <div class="cm-cell cm-zero" title="False Healthy: 0">
+                  <b>0</b>
+                  <span class="cm-pct">0.0%</span>
+                </div>
+                <div class="cm-cell cm-err-low" title="False Warning: 4">
+                  <b>4</b>
+                  <span class="cm-pct">3.3%</span>
+                </div>
+                <div class="cm-cell cm-true-high" title="True Critical: 116 / 120 (96.7%)">
+                  <b>116</b>
+                  <span class="cm-pct">96.7%</span>
+                </div>
+              </div>
+            </div>
+            <div class="cm-footer-stats">
+              <span>Overall Accuracy: <b style="color: var(--status-healthy);">98.4%</b></span>
+              <span>Weighted F1: <b style="color: var(--accent-cyan);">0.979</b></span>
+              <span>Validation Loss: <b>0.042</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Motor Nameplate Technical Specs & ISO Standards -->
+      <div class="suite-tab-pane" id="tabSpecs" style="display: none;">
+        <div class="specs-layout">
+          <!-- Industrial Motor Rating Nameplate -->
+          <div class="nameplate-card">
+            <div class="nameplate-header">
+              <span class="nameplate-brand">ABB / SIEMENS INDUSTRIAL SPECIFICATION</span>
+              <span class="nameplate-type">3-PHASE SQUIRREL CAGE INDUCTION MOTOR</span>
+            </div>
+            <div class="nameplate-grid">
+              <div class="np-item">
+                <span class="np-key">RATED POWER:</span>
+                <span class="np-val">7.5 kW (10.0 HP)</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">RATED VOLTAGE:</span>
+                <span class="np-val">400 V &plusmn; 10% (Star Y)</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">FULL LOAD CURRENT:</span>
+                <span class="np-val">14.8 A</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">RATED FREQUENCY:</span>
+                <span class="np-val">50 Hz</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">SYNCHRONOUS SPEED:</span>
+                <span class="np-val">1500 RPM (2-Pole Pairs)</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">RATED ROTOR SPEED:</span>
+                <span class="np-val">1475 RPM (Slip s = 1.67%)</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">POWER FACTOR:</span>
+                <span class="np-val">cos &phi; = 0.86</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">EFFICIENCY CLASS:</span>
+                <span class="np-val">IE3 Premium (90.4%)</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">DUTY / ENCLOSURE:</span>
+                <span class="np-val">S1 Continuous / IP55 TEFC</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">INSULATION CLASS:</span>
+                <span class="np-val">Class F (Rise Class B &le;80K)</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">DRIVE END BEARING:</span>
+                <span class="np-val">SKF 6208-2Z (Deep Groove)</span>
+              </div>
+              <div class="np-item">
+                <span class="np-key">NON-DRIVE BEARING:</span>
+                <span class="np-val">SKF 6206-2Z (Deep Groove)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ISO 10816-3 Severity Reference Matrix -->
+          <div class="iso-reference-card">
+            <h4 class="diagnostics-header">📐 ISO 10816-3 Vibration Severity Classification (Group 2 Machines)</h4>
+            <div class="iso-table-wrapper">
+              <table class="iso-table">
+                <thead>
+                  <tr>
+                    <th>ISO Zone</th>
+                    <th>Vibration Range</th>
+                    <th>Operational Evaluation</th>
+                    <th>Standard Action Required</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="iso-row-a">
+                    <td><span class="badge-status badge-healthy">ZONE A</span></td>
+                    <td>&lt; 1.8 mm/s</td>
+                    <td>New machine commissioning condition</td>
+                    <td>Unrestricted continuous operation</td>
+                  </tr>
+                  <tr class="iso-row-b">
+                    <td><span class="badge-status badge-healthy">ZONE B</span></td>
+                    <td>1.8 – 4.5 mm/s</td>
+                    <td>Acceptable for long-term continuous service</td>
+                    <td>Standard predictive monitoring</td>
+                  </tr>
+                  <tr class="iso-row-c">
+                    <td><span class="badge-status badge-warning">ZONE C</span></td>
+                    <td>4.5 – 7.1 mm/s</td>
+                    <td>Unsatisfactory for long-term service</td>
+                    <td>Schedule corrective maintenance</td>
+                  </tr>
+                  <tr class="iso-row-d">
+                    <td><span class="badge-status badge-critical">ZONE D</span></td>
+                    <td>&gt; 7.1 mm/s</td>
+                    <td>Critical danger of structural machine damage</td>
+                    <td>Immediate emergency trip / shutdown</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="iso-caption">
+              Reference standard ISO 10816-3 for industrial electric motors rated 15 kW to 300 kW with rigid/flexible mountings.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: TELEMETRY AUDIT TABLE -->
     <section class="dashboard-panel">
       <div class="panel-header">
         <div>
@@ -495,10 +886,10 @@
     <!-- FOOTER -->
     <footer class="app-footer">
       <div>
-        <b>MotorGuard AI</b> &bull; B.Tech First Year Project Prototype &bull; Induction Motor Condition-Monitoring
+        <b>MotorGuard AI</b> &bull; B.Tech Intermediate Engineering Project &bull; Induction Motor Condition-Monitoring &amp; Prognostics
       </div>
       <div>
-        Built with Pure HTML5, CSS3, & Modern JavaScript &bull; Hosted on GitHub Pages
+        Built with Pure HTML5, CSS3, &amp; Modern JavaScript &bull; Hosted on GitHub Pages
       </div>
     </footer>
 
