@@ -5,7 +5,7 @@ Industrial-Grade Condition-Monitoring Dashboard for Induction Motors.
 """
 
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -233,6 +233,132 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+
+def render_table(
+    df: pd.DataFrame,
+    max_height: int = 350,
+    include_index: bool = False,
+    precision: int = 2,
+):
+    """
+    Renders a table safely without crashing if pyarrow is unavailable.
+    Tries native st.dataframe first; if pyarrow is missing, renders an ultra-clean,
+    scrollable HTML table with sticky headers, zebra rows, and pill badge highlights.
+    """
+    try:
+        import pyarrow  # Test if pyarrow can be imported
+        if include_index:
+            st.dataframe(df, use_container_width=True, height=max_height)
+        else:
+            st.dataframe(df.reset_index(drop=True), use_container_width=True, height=max_height)
+        return
+    except (ImportError, ModuleNotFoundError):
+        pass  # Gracefully fall back to styled HTML table
+
+    # --- HIGH-END HTML TABLE FALLBACK (Zero-dependency, SmartAppControl compatible) ---
+    display_df = df.copy()
+
+    # Format numeric columns cleanly
+    for col in display_df.select_dtypes(include=[np.number]).columns:
+        display_df[col] = display_df[col].apply(
+            lambda v: f"{v:.{precision}f}" if pd.notna(v) else "-"
+        )
+
+    # Format health_status into HTML pill badges if present
+    if "health_status" in display_df.columns:
+        display_df["health_status"] = display_df["health_status"].apply(
+            lambda s: (
+                '<span class="badge-pill badge-healthy">🟢 HEALTHY</span>'
+                if s == "Healthy"
+                else (
+                    '<span class="badge-pill badge-warning">🟡 WARNING</span>'
+                    if s == "Warning"
+                    else '<span class="badge-pill badge-critical">🔴 CRITICAL</span>'
+                )
+            )
+        )
+
+    if "is_anomaly" in display_df.columns:
+        display_df["is_anomaly"] = display_df["is_anomaly"].apply(
+            lambda a: (
+                '<span style="color: #ef4444; font-weight: 700;">⚠️ Yes</span>'
+                if a in [True, 1, "True"]
+                else '<span style="color: #10b981; font-weight: 600;">✓ No</span>'
+            )
+        )
+
+    if "risk_index" in display_df.columns:
+        display_df["risk_index"] = display_df["risk_index"].apply(
+            lambda r: (
+                f'<span style="font-weight: 800; color: #ef4444;">{r}</span>'
+                if float(r) >= 70
+                else (
+                    f'<span style="font-weight: 800; color: #f59e0b;">{r}</span>'
+                    if float(r) >= 35
+                    else f'<span style="font-weight: 800; color: #10b981;">{r}</span>'
+                )
+            )
+        )
+
+    # Format column names for display
+    display_df.columns = [
+        col.replace("_", " ").title() for col in display_df.columns
+    ]
+
+    html_table = display_df.to_html(
+        index=include_index,
+        classes="custom-table",
+        escape=False,
+    )
+
+    styled_wrapper = f"""
+    <div style="max-height: {max_height}px; overflow-y: auto; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 10px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px;">
+        <style>
+        .custom-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+            color: #1e293b;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }}
+        .custom-table thead th {{
+            position: sticky;
+            top: 0;
+            background: #f8fafc;
+            color: #0f172a;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            padding: 10px 14px;
+            border-bottom: 2px solid #cbd5e1;
+            text-align: left;
+            z-index: 2;
+        }}
+        .custom-table tbody td {{
+            padding: 9px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            white-space: nowrap;
+        }}
+        .custom-table tbody tr:nth-child(even) {{
+            background-color: #f8fafc;
+        }}
+        .custom-table tbody tr:hover {{
+            background-color: #eff6ff;
+            transition: background-color 0.15s ease;
+        }}
+        .custom-table th:first-child, .custom-table td:first-child {{
+            padding-left: 16px;
+        }}
+        .custom-table th:last-child, .custom-table td:last-child {{
+            padding-right: 16px;
+        }}
+        </style>
+        {html_table}
+    </div>
+    """
+    st.markdown(styled_wrapper, unsafe_allow_html=True)
 
 
 @st.cache_data
@@ -596,7 +722,7 @@ def main():
 
         st.markdown("<hr style='margin: 16px 0; border: none; border-top: 1px solid #e2e8f0;'/>", unsafe_allow_html=True)
 
-        col_diag_left, col_diag_right = st.columns([1.4, 1])
+        col_diag_left, col_diag_right = st.columns([1.3, 1.2])
 
         with col_diag_left:
             st.markdown("#### 🩺 Instant Health Verdict & Diagnostic Explanation")
@@ -612,11 +738,7 @@ def main():
         with col_diag_right:
             st.markdown("#### 📊 Statistical Summary Table")
             summary_stats = compute_summary_statistics(df)
-            st.dataframe(
-                summary_stats.style.format(precision=2),
-                use_container_width=True,
-                height=160,
-            )
+            render_table(summary_stats, max_height=200, include_index=True, precision=2)
 
     # =========================================================================
     # TAB 2: SENSOR TELEMETRY & TRENDS
@@ -781,15 +903,7 @@ def main():
 
         with pca_col2:
             st.markdown("#### 📊 Eigenvalues & Explained Variance")
-            st.dataframe(
-                pca_summary.style.format({
-                    "Eigenvalue": "{:.4f}",
-                    "Explained_Variance_Pct": "{:.2f}%",
-                    "Cumulative_Variance_Pct": "{:.2f}%",
-                }),
-                use_container_width=True,
-                height=170,
-            )
+            render_table(pca_summary, max_height=190, include_index=False, precision=2)
 
             fig_bar_pca = px.bar(
                 pca_summary,
@@ -808,10 +922,7 @@ def main():
             st.plotly_chart(fig_bar_pca, use_container_width=True)
 
         st.markdown("#### 🧮 Component Loadings Matrix (Eigenvectors)")
-        st.dataframe(
-            loadings.style.background_gradient(cmap="coolwarm", axis=0).format(precision=4),
-            use_container_width=True,
-        )
+        render_table(loadings, max_height=220, include_index=True, precision=4)
 
     # =========================================================================
     # TAB 5: AI ANOMALY & RISK
@@ -914,7 +1025,7 @@ def main():
             ] if c in sub_df.columns
         ]
 
-        st.dataframe(sub_df[cols_to_show], use_container_width=True, height=350)
+        render_table(sub_df[cols_to_show], max_height=380, include_index=False, precision=2)
 
         csv_bytes = sub_df.to_csv(index=False).encode("utf-8")
         st.download_button(
