@@ -1,0 +1,28 @@
+{
+  "name": "intelligent-predictive-maintenance",
+  "version": "1.0.0",
+  "description": "Industrial Induction Motor Condition-Monitoring & Predictive Maintenance System",
+  "main": "app.py",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "start": "node scripts/dev.js",
+    "test": "node scripts/test.js",
+    "install:python": "pip install -r requirements.txt",
+    "postinstall": "node -e \"console.log('\\x1b[32m✔ Setup complete! Run \\x1b[1mnpm run dev\\x1b[22m to start the dashboard.\\x1b[0m')\""
+  },
+  "keywords": [
+    "predictive-maintenance",
+    "induction-motor",
+    "machine-learning",
+    "isolation-forest",
+    "pca",
+    "streamlit",
+    "condition-monitoring",
+    "iot-scada"
+  ],
+  "author": "Aniket Das",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
