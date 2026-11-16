@@ -4,17 +4,16 @@
 [![Python Version](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Streamlit App](https://img.shields.io/badge/Streamlit-1.40+-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
-[![CI Status](https://img.shields.io/badge/Build-Passing-10b981?logo=github-actions&logoColor=white)](#-automated-testing)
+[![GitHub Actions CI](https://img.shields.io/badge/GitHub%20Actions-Passing-10b981?logo=github-actions&logoColor=white)](#-automated-testing)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 An educational, industrial-grade software prototype demonstrating **real-time condition-monitoring, statistical analytics, dimensionality reduction, and unsupervised machine learning anomaly detection** for an electric induction motor.
 
 ---
 
-## 🚀 Quick Start (Choose Your Preferred Workflow)
+## 🚀 Quick Start Guide
 
-### Option A: Using NPM (Recommended for Web Developers)
+### Option 1: Using NPM (Fast & Recommended)
 ```bash
 # 1. Install & configure
 npm install
@@ -26,7 +25,7 @@ npm run dev
 npm test
 ```
 
-### Option B: Using Standard Python
+### Option 2: Using Standard Python
 ```bash
 # 1. Install dependencies
 pip install -r requirements.txt
@@ -38,13 +37,7 @@ streamlit run app.py
 pytest -v
 ```
 
-### Option C: Using Docker Container
-```bash
-# Launch multi-platform container in one command
-docker compose up --build
-```
-
-Access your dashboard at: **`http://localhost:8501`**
+> **Access Dashboard:** Open your browser at **`http://localhost:8501`**
 
 ---
 
@@ -143,29 +136,26 @@ tests/test_health_index.py::test_compute_risk_index_and_status PASSED    [100%]
 
 ---
 
-## ☁️ Exact GitHub & Cloud Deployment Guide
+## ☁️ How to Deploy on GitHub & Run Live on the Web
 
-This repository has the exact file structure pre-configured for **GitHub, Streamlit Community Cloud, Render, and Docker**:
+### Step 1: Push This Project to GitHub
+1. Create a new repository on **[github.com/new](https://github.com/new)** (e.g. `Intelegent_predictive_maintenance`).
+2. Run these two commands in your terminal:
+   ```bash
+   git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/Intelegent_predictive_maintenance.git
+   git push -u origin main
+   ```
 
-### Step 1: Push to Your GitHub Repository
-```bash
-git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/<YOUR_REPOSITORY_NAME>.git
-git push -u origin main
-```
-
-### Step 2: 1-Click Deploy on Streamlit Cloud (Free & Instant)
+### Step 2: Make It Live on the Web (Free via Streamlit Cloud directly from GitHub)
 1. Go to **[share.streamlit.io](https://share.streamlit.io/)** and sign in with your GitHub account.
 2. Click **"New App"**.
-3. Select your repository: `<YOUR_GITHUB_USERNAME>/<YOUR_REPOSITORY_NAME>`.
-4. Main file path: **`app.py`**.
-5. Click **"Deploy!"** — Your dashboard goes live in ~60 seconds!
-
-### Step 3: Deploy via Docker (Render, Hugging Face, Railway)
-The included `Dockerfile` and `docker-compose.yml` build automatically on any container service without extra configuration.
+3. Select your repository: `<YOUR_GITHUB_USERNAME>/Intelegent_predictive_maintenance`.
+4. Set Main file path: **`app.py`**.
+5. Click **"Deploy!"** — It reads directly from your GitHub repository and puts your app live on the internet!
 
 ---
 
-## 📁 Exact File Structure for GitHub Deployment
+## 📁 Exact File Structure for GitHub
 
 ```
 Intelegent_predictive_maintenance/
@@ -199,11 +189,8 @@ Intelegent_predictive_maintenance/
 │   ├── test_analytics.py
 │   ├── test_anomaly_detector.py
 │   └── test_health_index.py
-├── .dockerignore                # Docker ignore rules
 ├── .gitignore                   # Production Git ignore rules
 ├── app.py                       # Main Streamlit dashboard application
-├── docker-compose.yml           # Container orchestration
-├── Dockerfile                   # Multi-stage production container image
 ├── LICENSE                      # MIT Open Source License
 ├── package.json                 # NPM scripts (npm install, npm run dev, npm test)
 ├── README.md                    # Complete GitHub documentation

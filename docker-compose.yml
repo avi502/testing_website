@@ -1,9 +1,0 @@
-services:
-  motorguard:
-    build: .
-    container_name: motorguard_dashboard
-    ports:
-      - "8501:8501"
-    environment:
-      - PYTHONUNBUFFERED=1
-    restart: unless-stopped
