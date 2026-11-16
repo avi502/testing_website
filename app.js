@@ -345,11 +345,13 @@ function drawRadialGauge(canvasId, value, min, max, warn, crit, isLowerBetter = 
   const centerY = height - 15;
   const radius = width * 0.42;
 
+  const isLight = document.body.classList.contains("light-mode");
+
   // Background arc (semi-circle from PI to 2*PI)
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI, false);
   ctx.lineWidth = 14;
-  ctx.strokeStyle = "#16223d";
+  ctx.strokeStyle = isLight ? "#e2e8f0" : "#16223d";
   ctx.stroke();
 
   // Value fraction bounded in [0, 1]
@@ -414,7 +416,7 @@ function drawRadialGauge(canvasId, value, min, max, warn, crit, isLowerBetter = 
   ctx.moveTo(centerX, centerY);
   ctx.lineTo(tipX, tipY);
   ctx.lineWidth = 3;
-  ctx.strokeStyle = "#ffffff";
+  ctx.strokeStyle = isLight ? "#1e293b" : "#ffffff";
   ctx.stroke();
 
   // Center pivot pin
@@ -631,6 +633,10 @@ function initFftChart(chartFont) {
       }
     }
   });
+
+  if (document.body.classList.contains("light-mode")) {
+    applyThemeToCharts(true);
+  }
 }
 
 function initRulChart(chartFont) {
@@ -728,6 +734,10 @@ function initRulChart(chartFont) {
       }
     }
   });
+
+  if (document.body.classList.contains("light-mode")) {
+    applyThemeToCharts(true);
+  }
 }
 
 // =============================================================================
@@ -1406,6 +1416,7 @@ function initEventListeners() {
   initSidebarNav();
   initEconomicsCalculator();
   initPrintReport();
+  initThemeToggle();
 }
 
 function initSidebarNav() {
@@ -1568,6 +1579,113 @@ function initPrintReport() {
     printBtn.addEventListener("click", () => {
       window.print();
     });
+  }
+}
+
+// =============================================================================
+// DARK & LIGHT MODE THEME CONTROLLER (UPPER-LEFT CORNER)
+// =============================================================================
+function initThemeToggle() {
+  const toggleBtn = document.getElementById("themeToggleBtn");
+  const labelText = document.getElementById("themeToggleLabel");
+  if (!toggleBtn) return;
+
+  // Retrieve saved theme preference or default to "dark"
+  let savedTheme = "dark";
+  try {
+    const stored = localStorage.getItem("motorguard_theme");
+    if (stored === "light" || stored === "dark") {
+      savedTheme = stored;
+    }
+  } catch (e) {}
+
+  setTheme(savedTheme, false);
+
+  toggleBtn.addEventListener("click", () => {
+    const isCurrentlyLight = document.body.classList.contains("light-mode");
+    const newTheme = isCurrentlyLight ? "dark" : "light";
+    setTheme(newTheme, true);
+  });
+
+  function setTheme(theme, updateCharts) {
+    const isLight = theme === "light";
+    if (isLight) {
+      document.body.classList.remove("dark-mode");
+      document.body.classList.add("light-mode");
+      if (labelText) labelText.textContent = "Light";
+      toggleBtn.setAttribute("aria-pressed", "true");
+      toggleBtn.setAttribute("title", "Switch to Dark Mode");
+    } else {
+      document.body.classList.remove("light-mode");
+      document.body.classList.add("dark-mode");
+      if (labelText) labelText.textContent = "Dark";
+      toggleBtn.setAttribute("aria-pressed", "false");
+      toggleBtn.setAttribute("title", "Switch to Light Mode");
+    }
+
+    try {
+      localStorage.setItem("motorguard_theme", theme);
+    } catch (e) {}
+
+    if (updateCharts) {
+      applyThemeToCharts(isLight);
+    }
+  }
+}
+
+function applyThemeToCharts(isLight) {
+  const chartFont = { family: "'Plus Jakarta Sans', sans-serif" };
+  const gridColor = isLight ? "rgba(15, 23, 42, 0.08)" : "rgba(255, 255, 255, 0.04)";
+  const tickColor = isLight ? "#475569" : "#64748b";
+  const titleColor = isLight ? "#334155" : "#64748b";
+  const tooltipBg = isLight ? "#ffffff" : "#111a2e";
+  const tooltipTitle = isLight ? "#0f172a" : "#f8fafc";
+  const tooltipBody = isLight ? "#334155" : "#94a3b8";
+  const tooltipBorder = isLight ? "rgba(15, 23, 42, 0.15)" : "rgba(56, 189, 248, 0.3)";
+
+  const charts = [telemetryChartInstance, pcaChartInstance, fftChartInstance, rulChartInstance];
+
+  charts.forEach((chart) => {
+    if (!chart || !chart.options) return;
+
+    if (chart.options.scales) {
+      Object.values(chart.options.scales).forEach((scale) => {
+        if (scale.grid) scale.grid.color = gridColor;
+        if (scale.ticks) {
+          scale.ticks.color = tickColor;
+          scale.ticks.font = chartFont;
+        }
+        if (scale.title) {
+          scale.title.color = titleColor;
+          scale.title.font = chartFont;
+        }
+      });
+    }
+
+    if (chart.options.plugins) {
+      if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+        chart.options.plugins.legend.labels.color = tickColor;
+        chart.options.plugins.legend.labels.font = chartFont;
+      }
+      if (chart.options.plugins.tooltip) {
+        chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+        chart.options.plugins.tooltip.titleColor = tooltipTitle;
+        chart.options.plugins.tooltip.bodyColor = tooltipBody;
+        chart.options.plugins.tooltip.borderColor = tooltipBorder;
+      }
+    }
+
+    chart.update("none");
+  });
+
+  // Re-draw SCADA Radial Gauges for contrast
+  if (state.telemetryData && state.telemetryData.length > 0) {
+    const latest = state.telemetryData[state.telemetryData.length - 1];
+    drawRadialGauge("gaugeVibration", latest.vibration, THRESHOLDS.vibration.min, THRESHOLDS.vibration.max, THRESHOLDS.vibration.warn, THRESHOLDS.vibration.crit, true);
+    drawRadialGauge("gaugeTemperature", latest.temperature, THRESHOLDS.temperature.min, THRESHOLDS.temperature.max, THRESHOLDS.temperature.warn, THRESHOLDS.temperature.crit, true);
+    drawRadialGauge("gaugeCurrent", latest.current, THRESHOLDS.current.min, THRESHOLDS.current.max, THRESHOLDS.current.warn, THRESHOLDS.current.crit, true);
+    drawRadialGauge("gaugeVoltage", latest.voltage, THRESHOLDS.voltage.min, THRESHOLDS.voltage.max, THRESHOLDS.voltage.warn, THRESHOLDS.voltage.crit, false);
+    drawRadialGauge("gaugeSpeed", latest.rotational_speed, THRESHOLDS.rotational_speed.min, THRESHOLDS.rotational_speed.max, THRESHOLDS.rotational_speed.warn, THRESHOLDS.rotational_speed.crit, false);
   }
 }
 

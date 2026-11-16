@@ -9,7 +9,8 @@
 [![Engineering Level](https://img.shields.io/badge/Level-Final%20Year%20Capstone-38bdf8)](index.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-An enterprise-grade **Dark Mode** industrial predictive maintenance and prognostics web suite with a **Left Sidebar Multi-View Navigation Menu**, designed specifically for **GitHub Pages deployment**. It monitors and predicts motor degradation across 5 core channels (**Vibration, Temperature, Current, Voltage, Speed**) using:
+An enterprise-grade **Dark & Light Mode** industrial predictive maintenance and prognostics web suite with a **Left Sidebar Multi-View Navigation Menu**, designed specifically for **GitHub Pages deployment**. It monitors and predicts motor degradation across 5 core channels (**Vibration, Temperature, Current, Voltage, Speed**) using:
+- **Upper-Left Dark / Light Mode Switch:** Instant tactile theme toggle (persisted in `localStorage`) with automatic Chart.js contrast recalibration and SCADA dial needle adaptation.
 - **Sleek Left Sidebar Navigation Menu:** 11 operational views with live motor status widget, system uptime counter, and mobile responsive drawer.
 - **ISO 13373-1 Fast Fourier Transform (FFT) Frequency Spectrum:** Real-time harmonic breakdown (1X, 2X, 3X, BPFO, BPFI) for bearing race and shaft misalignment detection.
 - **Weibull Remaining Useful Life (RUL) Prognostics:** Health Index degradation curves (100% to 0% HI) with 95% confidence bounds and hours-to-failure prediction.

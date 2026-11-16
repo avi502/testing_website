@@ -7,10 +7,14 @@
    ============================================================================= */
 
 :root {
+  /* Default Dark Mode (60-30-10 palette) */
   --bg-primary: #080c14;
   --bg-secondary: #0f172a;
   --bg-card: #111a2e;
   --bg-card-hover: #16223d;
+  --bg-subcard: #0d1527;
+  --bg-sidebar: #090e1a;
+  --bg-header: rgba(15, 23, 42, 0.85);
   --border-color: rgba(56, 189, 248, 0.12);
   --border-glow: rgba(56, 189, 248, 0.3);
 
@@ -43,6 +47,42 @@
   --shadow-glow-green: 0 0 15px rgba(16, 185, 129, 0.3);
 }
 
+/* Light Mode Theme Variables */
+body.light-mode {
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-subcard: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --bg-header: rgba(255, 255, 255, 0.92);
+  --border-color: rgba(15, 23, 42, 0.12);
+  --border-glow: rgba(2, 132, 199, 0.3);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --accent-cyan: #0284c7;
+  --accent-indigo: #4f46e5;
+
+  --status-healthy: #059669;
+  --status-healthy-bg: rgba(5, 150, 105, 0.1);
+  --status-healthy-border: rgba(5, 150, 105, 0.3);
+
+  --status-warning: #d97706;
+  --status-warning-bg: rgba(217, 119, 6, 0.1);
+  --status-warning-border: rgba(217, 119, 6, 0.3);
+
+  --status-critical: #dc2626;
+  --status-critical-bg: rgba(220, 38, 38, 0.1);
+  --status-critical-border: rgba(220, 38, 38, 0.3);
+
+  --shadow-card: 0 4px 16px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --shadow-glow-cyan: 0 0 15px rgba(2, 132, 199, 0.18);
+  --shadow-glow-green: 0 0 15px rgba(5, 150, 105, 0.2);
+}
+
 /* Global Reset */
 * {
   margin: 0;
@@ -54,13 +94,14 @@ html {
   scroll-behavior: smooth;
 }
 
-body.dark-mode {
+body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* =============================================================================
@@ -84,7 +125,7 @@ body.dark-mode {
 .app-sidebar {
   width: 275px;
   min-width: 275px;
-  background: #090e1a;
+  background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -93,6 +134,7 @@ body.dark-mode {
   top: 0;
   z-index: 150;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .sidebar-brand-box {
@@ -130,12 +172,13 @@ body.dark-mode {
 .sidebar-motor-widget {
   margin: 14px 14px 6px 14px;
   padding: 12px 14px;
-  background: #0d1629;
-  border: 1px solid rgba(56, 189, 248, 0.15);
+  background: var(--bg-subcard);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   gap: 12px;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .motor-avatar-box {
@@ -279,9 +322,10 @@ body.dark-mode {
 
 .sidebar-bottom-meta {
   padding: 12px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-color);
   font-size: 0.68rem;
-  background: #060a14;
+  background: var(--bg-subcard);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .sb-meta-row {
@@ -363,13 +407,120 @@ body.dark-mode {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 28px;
-  background: rgba(15, 23, 42, 0.85);
+  padding: 12px 28px;
+  background: var(--bg-header);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* THEME TOGGLE (UPPER-LEFT SIDE) */
+.theme-toggle-box {
+  display: flex;
+  align-items: center;
+}
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-subcard);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 4px 10px 4px 6px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
+}
+
+.theme-toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 22px;
+  background: #060a14;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.theme-icon {
+  font-size: 0.68rem;
+  line-height: 1;
+  z-index: 1;
+  user-select: none;
+  transition: opacity 0.2s ease;
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(135deg, #38bdf8, #2563eb);
+  border-radius: 50%;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.theme-toggle-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.header-view-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-view-tag {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.header-view-sep {
+  color: var(--text-muted);
+}
+
+.header-view-sub {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .brand-logo {
@@ -2148,4 +2299,199 @@ body.dark-mode {
   .subsystems-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* =============================================================================
+   LIGHT MODE COMPONENT ADAPTATIONS & HIGH CONTRAST RULES
+   ============================================================================= */
+body.light-mode {
+  color-scheme: light;
+}
+
+body.light-mode .app-sidebar {
+  background: #ffffff;
+  border-right-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 4px 0 20px rgba(15, 23, 42, 0.05);
+}
+
+body.light-mode .sidebar-brand-box {
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .sidebar-motor-widget {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .sidebar-tab-link {
+  color: #475569;
+}
+
+body.light-mode .sidebar-tab-link:hover {
+  background: #f1f5f9;
+  color: #0284c7;
+}
+
+body.light-mode .sidebar-tab-link.active {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(79, 70, 229, 0.08));
+  color: #0284c7;
+  border-left-color: #0284c7;
+}
+
+body.light-mode .sidebar-bottom-meta {
+  background: #f8fafc;
+  border-top-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .app-header {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .sidebar-toggle-btn {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+
+body.light-mode .sidebar-toggle-btn:hover {
+  background: #e2e8f0;
+  border-color: #0284c7;
+}
+
+body.light-mode .system-status-pill {
+  background: rgba(5, 150, 105, 0.08);
+  border-color: rgba(5, 150, 105, 0.25);
+  color: #047857;
+  box-shadow: 0 0 10px rgba(5, 150, 105, 0.1);
+}
+
+body.light-mode .btn-secondary {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+body.light-mode .btn-secondary:hover {
+  background: #e2e8f0;
+  border-color: #0284c7;
+}
+
+body.light-mode .gauge-card,
+body.light-mode .calc-control-group,
+body.light-mode .subsystem-box,
+body.light-mode .roi-kpi-card,
+body.light-mode .spec-card,
+body.light-mode .sensor-slider-card,
+body.light-mode .predict-metric-box,
+body.light-mode .feature-importance-card,
+body.light-mode .rul-stat-box,
+body.light-mode .fft-stat-box {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .gauge-card:hover,
+body.light-mode .subsystem-box:hover,
+body.light-mode .sensor-slider-card:hover {
+  border-color: rgba(2, 132, 199, 0.3);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+body.light-mode .sensor-num-input,
+body.light-mode .calc-input-row input {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #0f172a;
+}
+
+body.light-mode .sensor-range-slider {
+  background: #e2e8f0;
+}
+
+body.light-mode .predict-result-box {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .comp-track {
+  background: #e2e8f0;
+}
+
+body.light-mode .comp-net-savings-box {
+  background: rgba(5, 150, 105, 0.08);
+  border-color: rgba(5, 150, 105, 0.25);
+}
+
+body.light-mode .subtab-btn {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+body.light-mode .subtab-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+body.light-mode .subtab-btn.active {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+body.light-mode .table-search-input,
+body.light-mode .table-select {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+
+body.light-mode .audit-table th,
+body.light-mode .benchmark-table th,
+body.light-mode .iso-table th {
+  background: #f8fafc;
+  color: #475569;
+  border-bottom-color: rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .audit-table td,
+body.light-mode .benchmark-table td,
+body.light-mode .iso-table td {
+  border-bottom-color: rgba(15, 23, 42, 0.06);
+}
+
+body.light-mode .audit-table tr:hover,
+body.light-mode .benchmark-table tr:hover,
+body.light-mode .iso-table tr:hover {
+  background: rgba(2, 132, 199, 0.04);
+}
+
+body.light-mode .dropdown-menu {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.15);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .dropdown-item {
+  color: #0f172a;
+}
+
+body.light-mode .dropdown-item:hover {
+  background: #f1f5f9;
+}
+
+body.light-mode .app-footer {
+  background: #ffffff;
+  border-top-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+body.light-mode ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+body.light-mode ::-webkit-scrollbar-thumb:hover {
+  background: #0284c7;
 }
