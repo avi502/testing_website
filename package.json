@@ -1,24 +1,28 @@
 {
-  "name": "intelligent-predictive-maintenance",
+  "name": "motorguard-ai",
   "version": "1.0.0",
-  "description": "Industrial Induction Motor Condition-Monitoring & Predictive Maintenance System",
-  "main": "app.py",
+  "description": "Industrial Induction Motor Condition-Monitoring & Predictive Maintenance Dashboard (Dark Mode). Ready for GitHub Pages.",
+  "main": "index.html",
   "scripts": {
-    "dev": "node scripts/dev.js",
-    "start": "node scripts/dev.js",
+    "dev": "node scripts/serve.js",
+    "start": "node scripts/serve.js",
+    "serve": "node scripts/serve.js",
+    "dev:python": "python -m streamlit run app.py",
     "test": "node scripts/test.js",
-    "install:python": "pip install -r requirements.txt",
-    "postinstall": "node -e \"console.log('\\x1b[32m✔ Setup complete! Run \\x1b[1mnpm run dev\\x1b[22m to start the dashboard.\\x1b[0m')\""
+    "test:python": "pytest -v",
+    "postinstall": "node -e \"console.log('\\x1b[32m✔ Setup complete! Run \\x1b[1mnpm run dev\\x1b[22m to launch the Dark Mode Dashboard.\\x1b[0m')\""
   },
   "keywords": [
+    "github-pages",
+    "dark-mode",
     "predictive-maintenance",
     "induction-motor",
-    "machine-learning",
-    "isolation-forest",
     "pca",
-    "streamlit",
-    "condition-monitoring",
-    "iot-scada"
+    "isolation-forest",
+    "scada",
+    "iot",
+    "html5",
+    "chartjs"
   ],
   "author": "Aniket Das",
   "license": "MIT",

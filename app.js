@@ -1,0 +1,871 @@
+/**
+ * app.js - MotorGuard AI Engine
+ * Industrial Induction Motor Condition-Monitoring, PCA & Anomaly Detection.
+ * 100% Client-Side JavaScript - Ready for GitHub Pages Deployment.
+ */
+
+// =============================================================================
+// MOTOR STANDARDS & THRESHOLDS (ISO 10816-3 & Thermal Insulation Limits)
+// =============================================================================
+const THRESHOLDS = {
+  vibration: { warn: 4.5, crit: 7.1, min: 0, max: 12, unit: "mm/s" },
+  temperature: { warn: 75.0, crit: 90.0, min: 20, max: 120, unit: "°C" },
+  current: { warn: 15.0, crit: 20.0, min: 0, max: 30, unit: "A" },
+  voltage: { warn: 370.0, crit: 350.0, min: 320, max: 460, unit: "V" },
+  rotational_speed: { warn: 1420.0, crit: 1370.0, min: 1200, max: 1550, unit: "RPM" }
+};
+
+const SENSOR_KEYS = ["vibration", "temperature", "current", "voltage", "rotational_speed"];
+
+// =============================================================================
+// APPLICATION STATE
+// =============================================================================
+const state = {
+  isRunning: true,
+  streamInterval: 1000, // 1 Hz
+  timerId: null,
+  activeSensor: "vibration",
+  statusFilter: "ALL",
+  searchQuery: "",
+  activeFault: "normal", // 'normal' | 'bearing' | 'thermal' | 'electrical'
+  telemetryData: [],
+  maxHistory: 150,
+  pcaCache: null
+};
+
+// =============================================================================
+// SYNTHETIC MOTOR SENSOR SIMULATOR
+// =============================================================================
+function gaussianRandom(mean = 0, stdev = 1) {
+  let u = 1 - Math.random();
+  let v = Math.random();
+  let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  return z * stdev + mean;
+}
+
+function generateObservation(index, faultMode = "normal") {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString();
+
+  let vib, temp, curr, volt, rpm, stateLabel;
+
+  if (faultMode === "bearing") {
+    // Bearing defect: severe vibration surge, slight heating
+    stateLabel = "Critical";
+    vib = Math.max(0.5, gaussianRandom(8.8, 0.9));
+    temp = gaussianRandom(72.0, 3.5);
+    curr = gaussianRandom(12.5, 0.8);
+    volt = gaussianRandom(398.0, 2.5);
+    rpm = gaussianRandom(1460.0, 8.0);
+  } else if (faultMode === "thermal") {
+    // Thermal overheating: stator winding temperature runaway
+    stateLabel = "Critical";
+    vib = gaussianRandom(4.2, 0.5);
+    temp = gaussianRandom(96.5, 3.2);
+    curr = gaussianRandom(17.5, 1.2);
+    volt = gaussianRandom(388.0, 3.0);
+    rpm = gaussianRandom(1435.0, 10.0);
+  } else if (faultMode === "electrical") {
+    // Electrical fault: voltage drop + high stator surge current
+    stateLabel = "Critical";
+    vib = gaussianRandom(5.8, 0.8);
+    temp = gaussianRandom(84.0, 3.0);
+    curr = gaussianRandom(22.8, 1.5);
+    volt = gaussianRandom(345.0, 6.0);
+    rpm = gaussianRandom(1365.0, 14.0);
+  } else {
+    // 80% Normal, 15% Warning, 5% Random Anomaly
+    const roll = Math.random();
+    if (roll < 0.80) {
+      stateLabel = "Healthy";
+      vib = Math.max(0.3, gaussianRandom(2.1, 0.35));
+      temp = gaussianRandom(52.5, 2.8);
+      curr = Math.max(1.0, gaussianRandom(9.8, 0.6));
+      volt = gaussianRandom(400.0, 2.5);
+      rpm = gaussianRandom(1475.0, 6.0);
+    } else if (roll < 0.94) {
+      stateLabel = "Warning";
+      vib = gaussianRandom(5.2, 0.6);
+      temp = gaussianRandom(77.5, 3.0);
+      curr = gaussianRandom(16.2, 1.0);
+      volt = gaussianRandom(388.0, 4.0);
+      rpm = gaussianRandom(1440.0, 10.0);
+    } else {
+      stateLabel = "Critical";
+      vib = gaussianRandom(8.2, 0.8);
+      temp = gaussianRandom(94.0, 3.5);
+      curr = gaussianRandom(21.5, 1.2);
+      volt = gaussianRandom(365.0, 6.0);
+      rpm = gaussianRandom(1385.0, 15.0);
+    }
+  }
+
+  // Round values
+  const reading = {
+    index: index,
+    timestamp: timeStr,
+    vibration: parseFloat(vib.toFixed(2)),
+    temperature: parseFloat(temp.toFixed(1)),
+    current: parseFloat(curr.toFixed(2)),
+    voltage: parseFloat(volt.toFixed(1)),
+    rotational_speed: parseFloat(rpm.toFixed(0))
+  };
+
+  // Evaluate rule checks & composite risk
+  const evaluation = evaluateHealthAndRisk(reading);
+  return { ...reading, ...evaluation };
+}
+
+// =============================================================================
+// DOMAIN HEALTH RULES & 0-100 RISK ENGINE
+// =============================================================================
+function evaluateHealthAndRisk(row) {
+  const reasons = [];
+  let ruleRisk = 0;
+
+  // 1. Vibration
+  if (row.vibration >= THRESHOLDS.vibration.crit) {
+    ruleRisk += 35;
+    reasons.push(`Severe Vibration (${row.vibration} mm/s)`);
+  } else if (row.vibration >= THRESHOLDS.vibration.warn) {
+    ruleRisk += 15;
+    reasons.push(`High Vibration (${row.vibration} mm/s)`);
+  }
+
+  // 2. Temperature
+  if (row.temperature >= THRESHOLDS.temperature.crit) {
+    ruleRisk += 30;
+    reasons.push(`High Overheating (${row.temperature} °C)`);
+  } else if (row.temperature >= THRESHOLDS.temperature.warn) {
+    ruleRisk += 12;
+    reasons.push(`Elevated Temp (${row.temperature} °C)`);
+  }
+
+  // 3. Current
+  if (row.current >= THRESHOLDS.current.crit) {
+    ruleRisk += 25;
+    reasons.push(`Severe Overcurrent (${row.current} A)`);
+  } else if (row.current >= THRESHOLDS.current.warn) {
+    ruleRisk += 10;
+    reasons.push(`Current Surge (${row.current} A)`);
+  }
+
+  // 4. Voltage
+  if (row.voltage <= THRESHOLDS.voltage.crit) {
+    ruleRisk += 18;
+    reasons.push(`Severe Under-Voltage (${row.voltage} V)`);
+  } else if (row.voltage <= THRESHOLDS.voltage.warn) {
+    ruleRisk += 8;
+    reasons.push(`Voltage Drop (${row.voltage} V)`);
+  }
+
+  // 5. Speed
+  if (row.rotational_speed <= THRESHOLDS.rotational_speed.crit) {
+    ruleRisk += 15;
+    reasons.push(`Severe Speed Slip (${row.rotational_speed} RPM)`);
+  } else if (row.rotational_speed <= THRESHOLDS.rotational_speed.warn) {
+    ruleRisk += 8;
+    reasons.push(`Speed Drag (${row.rotational_speed} RPM)`);
+  }
+
+  // AI Anomaly flag (multivariate distance)
+  const isAnomaly = ruleRisk > 15;
+  const totalRisk = Math.min(100, Math.max(0, Math.round(ruleRisk + (isAnomaly ? 10 : 0))));
+
+  let healthStatus = "Healthy";
+  if (totalRisk >= 65 || row.vibration >= THRESHOLDS.vibration.crit || row.temperature >= THRESHOLDS.temperature.crit) {
+    healthStatus = "Critical";
+  } else if (totalRisk >= 30 || isAnomaly) {
+    healthStatus = "Warning";
+  }
+
+  const reasonText = reasons.length > 0 ? reasons.join("; ") : "All physical telemetry within optimal baseline";
+
+  return {
+    is_anomaly: isAnomaly,
+    risk_index: totalRisk,
+    health_status: healthStatus,
+    diagnosis_reason: reasonText
+  };
+}
+
+// =============================================================================
+// MATHEMATICAL ENGINE: Z-SCORE & 5x5 PEARSON CORRELATION MATRIX
+// =============================================================================
+function computePearsonMatrix(dataset) {
+  const n = dataset.length;
+  if (n < 2) return Array(5).fill(0).map(() => Array(5).fill(1));
+
+  // Compute means
+  const means = {};
+  SENSOR_KEYS.forEach(k => {
+    means[k] = dataset.reduce((sum, r) => sum + r[k], 0) / n;
+  });
+
+  // Compute variance & covariance
+  const matrix = Array(5).fill(0).map(() => Array(5).fill(0));
+
+  for (let i = 0; i < 5; i++) {
+    for (let j = 0; j < 5; j++) {
+      const k1 = SENSOR_KEYS[i];
+      const k2 = SENSOR_KEYS[j];
+
+      let num = 0;
+      let den1 = 0;
+      let den2 = 0;
+
+      for (let r = 0; r < n; r++) {
+        const d1 = dataset[r][k1] - means[k1];
+        const d2 = dataset[r][k2] - means[k2];
+        num += d1 * d2;
+        den1 += d1 * d1;
+        den2 += d2 * d2;
+      }
+
+      const denom = Math.sqrt(den1 * den2);
+      matrix[i][j] = denom === 0 ? 0 : parseFloat((num / denom).toFixed(2));
+    }
+  }
+
+  return matrix;
+}
+
+// =============================================================================
+// MATHEMATICAL ENGINE: PCA 2D PROJECTION & EIGENVALUES
+// =============================================================================
+function computePCA2D(dataset) {
+  const n = dataset.length;
+  if (n < 5) return { coords: [], eigenvalues: [1, 1], variancePct: [50, 50] };
+
+  // 1. Z-score standardisation
+  const means = {};
+  const stds = {};
+
+  SENSOR_KEYS.forEach(k => {
+    const avg = dataset.reduce((sum, r) => sum + r[k], 0) / n;
+    means[k] = avg;
+    const variance = dataset.reduce((sum, r) => sum + Math.pow(r[k] - avg, 2), 0) / n;
+    stds[k] = Math.sqrt(variance) || 1;
+  });
+
+  const standardized = dataset.map(r => {
+    return SENSOR_KEYS.map(k => (r[k] - means[k]) / stds[k]);
+  });
+
+  // 2. Covariance matrix (5x5)
+  const cov = Array(5).fill(0).map(() => Array(5).fill(0));
+  for (let i = 0; i < 5; i++) {
+    for (let j = 0; j < 5; j++) {
+      let sum = 0;
+      for (let r = 0; r < n; r++) {
+        sum += standardized[r][i] * standardized[r][j];
+      }
+      cov[i][j] = sum / (n - 1);
+    }
+  }
+
+  // 3. Power Iteration to find PC1 eigenvector
+  function powerIteration(A, iterations = 35) {
+    let b = [1, 1, 1, 1, 1];
+    for (let it = 0; it < iterations; it++) {
+      const nextB = [0, 0, 0, 0, 0];
+      for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+          nextB[i] += A[i][j] * b[j];
+        }
+      }
+      const norm = Math.sqrt(nextB.reduce((s, v) => s + v * v, 0)) || 1;
+      b = nextB.map(v => v / norm);
+    }
+
+    // Eigenvalue = b^T * A * b
+    let eigVal = 0;
+    for (let i = 0; i < 5; i++) {
+      let Ab_i = 0;
+      for (let j = 0; j < 5; j++) Ab_i += A[i][j] * b[j];
+      eigVal += b[i] * Ab_i;
+    }
+    return { vec: b, val: Math.max(0.01, eigVal) };
+  }
+
+  // PC1
+  const pc1 = powerIteration(cov);
+
+  // Deflate matrix to find PC2
+  const covDeflated = Array(5).fill(0).map((_, i) =>
+    Array(5).fill(0).map((__, j) => cov[i][j] - pc1.val * pc1.vec[i] * pc1.vec[j])
+  );
+  const pc2 = powerIteration(covDeflated);
+
+  // Project points onto PC1 and PC2
+  const coords = standardized.map((row, idx) => {
+    const x = row.reduce((sum, v, i) => sum + v * pc1.vec[i], 0);
+    const y = row.reduce((sum, v, i) => sum + v * pc2.vec[i], 0);
+    return {
+      x: parseFloat(x.toFixed(2)),
+      y: parseFloat(y.toFixed(2)),
+      status: dataset[idx].health_status,
+      timestamp: dataset[idx].timestamp,
+      vibration: dataset[idx].vibration,
+      risk: dataset[idx].risk_index
+    };
+  });
+
+  const totalVar = 5.0; // Sum of diagonal on correlation/z-score matrix is 5
+  const varPct1 = Math.min(99, Math.round((pc1.val / totalVar) * 100));
+  const varPct2 = Math.min(99 - varPct1, Math.round((pc2.val / totalVar) * 100));
+
+  return {
+    coords,
+    eigenvalues: [pc1.val, pc2.val],
+    variancePct: [varPct1, varPct2]
+  };
+}
+
+// =============================================================================
+// CANVAS SCADA RADIAL GAUGE RENDERER
+// =============================================================================
+function drawRadialGauge(canvasId, value, min, max, warn, crit, isLowerBetter = true) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.clearRect(0, 0, width, height);
+
+  const centerX = width / 2;
+  const centerY = height - 15;
+  const radius = width * 0.42;
+
+  // Background arc (semi-circle from PI to 2*PI)
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI, false);
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = "#16223d";
+  ctx.stroke();
+
+  // Value fraction bounded in [0, 1]
+  const fraction = Math.min(1, Math.max(0, (value - min) / (max - min)));
+
+  // Gauge colored sections
+  const warnFrac = Math.min(1, Math.max(0, (warn - min) / (max - min)));
+  const critFrac = Math.min(1, Math.max(0, (crit - min) / (max - min)));
+
+  function drawArc(startF, endF, color) {
+    if (endF <= startF) return;
+    ctx.beginPath();
+    ctx.arc(
+      centerX,
+      centerY,
+      radius,
+      Math.PI + startF * Math.PI,
+      Math.PI + endF * Math.PI,
+      false
+    );
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  }
+
+  if (isLowerBetter) {
+    drawArc(0, warnFrac, "rgba(16, 185, 129, 0.45)");
+    drawArc(warnFrac, critFrac, "rgba(245, 158, 11, 0.55)");
+    drawArc(critFrac, 1, "rgba(239, 68, 68, 0.65)");
+  } else {
+    drawArc(0, critFrac, "rgba(239, 68, 68, 0.65)");
+    drawArc(critFrac, warnFrac, "rgba(245, 158, 11, 0.55)");
+    drawArc(warnFrac, 1, "rgba(16, 185, 129, 0.45)");
+  }
+
+  // Active Value Fill with glowing accent
+  let activeColor = "#10b981";
+  if (isLowerBetter) {
+    if (value >= crit) activeColor = "#ef4444";
+    else if (value >= warn) activeColor = "#f59e0b";
+  } else {
+    if (value <= crit) activeColor = "#ef4444";
+    else if (value <= warn) activeColor = "#f59e0b";
+  }
+
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, Math.PI, Math.PI + fraction * Math.PI, false);
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = activeColor;
+  ctx.shadowColor = activeColor;
+  ctx.shadowBlur = 10;
+  ctx.stroke();
+  ctx.shadowBlur = 0; // reset
+
+  // Needle pointer
+  const needleAngle = Math.PI + fraction * Math.PI;
+  const needleLen = radius - 8;
+  const tipX = centerX + needleLen * Math.cos(needleAngle);
+  const tipY = centerY + needleLen * Math.sin(needleAngle);
+
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY);
+  ctx.lineTo(tipX, tipY);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#ffffff";
+  ctx.stroke();
+
+  // Center pivot pin
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
+  ctx.fillStyle = activeColor;
+  ctx.fill();
+}
+
+// =============================================================================
+// CHART.JS CONTROLLERS (Dark Mode)
+// =============================================================================
+let telemetryChartInstance = null;
+let riskChartInstance = null;
+let pcaChartInstance = null;
+
+function initCharts() {
+  const chartFont = { family: "'Plus Jakarta Sans', sans-serif" };
+
+  // 1. Telemetry Chart
+  const ctxTelem = document.getElementById("telemetryChart").getContext("2d");
+  telemetryChartInstance = new Chart(ctxTelem, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Vibration (mm/s)",
+        data: [],
+        borderColor: "#38bdf8",
+        backgroundColor: "rgba(56, 189, 248, 0.08)",
+        fill: true,
+        tension: 0.35,
+        borderWidth: 2.2,
+        pointRadius: 0,
+        pointHoverRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#111a2e",
+          titleColor: "#f8fafc",
+          bodyColor: "#94a3b8",
+          borderColor: "rgba(56, 189, 248, 0.3)",
+          borderWidth: 1
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b", font: chartFont, maxTicksLimit: 7 }
+        },
+        y: {
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b", font: chartFont }
+        }
+      }
+    }
+  });
+
+  // 2. Risk Index Timeline Chart
+  const ctxRisk = document.getElementById("riskChart").getContext("2d");
+  riskChartInstance = new Chart(ctxRisk, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Risk Index",
+        data: [],
+        borderColor: "#f59e0b",
+        backgroundColor: "rgba(245, 158, 11, 0.08)",
+        fill: true,
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b", font: chartFont, maxTicksLimit: 6 }
+        },
+        y: {
+          min: 0,
+          max: 100,
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b", font: chartFont }
+        }
+      }
+    }
+  });
+
+  // 3. PCA 2D Scatter Chart
+  const ctxPca = document.getElementById("pcaChart").getContext("2d");
+  pcaChartInstance = new Chart(ctxPca, {
+    type: "scatter",
+    data: {
+      datasets: [
+        { label: "Healthy", data: [], backgroundColor: "#10b981", pointRadius: 4.5 },
+        { label: "Warning", data: [], backgroundColor: "#f59e0b", pointRadius: 5.5 },
+        { label: "Critical", data: [], backgroundColor: "#ef4444", pointRadius: 6.5 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: {
+          position: "top",
+          labels: { color: "#94a3b8", font: chartFont, usePointStyle: true, boxWidth: 7 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: (${ctx.raw.x}, ${ctx.raw.y})`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "Principal Component 1 (PC1)", color: "#64748b", font: chartFont },
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b" }
+        },
+        y: {
+          title: { display: true, text: "Principal Component 2 (PC2)", color: "#64748b", font: chartFont },
+          grid: { color: "rgba(255, 255, 255, 0.04)" },
+          ticks: { color: "#64748b" }
+        }
+      }
+    }
+  });
+}
+
+// =============================================================================
+// HEATMAP RENDERING ENGINE
+// =============================================================================
+function renderCorrelationHeatmap(matrix) {
+  const container = document.getElementById("heatmapContainer");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const labels = ["Vib", "Temp", "Curr", "Volt", "RPM"];
+
+  // Header row
+  const headerRow = document.createElement("div");
+  headerRow.className = "heatmap-row";
+  headerRow.innerHTML = `<span class="heatmap-label"></span>` + labels.map(l => `<span class="heatmap-label" style="text-align: center;">${l}</span>`).join("");
+  container.appendChild(headerRow);
+
+  // Rows
+  for (let i = 0; i < 5; i++) {
+    const rowDiv = document.createElement("div");
+    rowDiv.className = "heatmap-row";
+    rowDiv.innerHTML = `<span class="heatmap-label">${labels[i]}</span>`;
+
+    for (let j = 0; j < 5; j++) {
+      const val = matrix[i][j];
+      const cell = document.createElement("div");
+      cell.className = "heatmap-cell";
+
+      // Color from Blue (-1) to Dark (0) to Red (+1)
+      let bg;
+      if (val >= 0) {
+        const intensity = Math.min(1, val);
+        bg = `rgba(239, 68, 68, ${0.15 + intensity * 0.75})`;
+      } else {
+        const intensity = Math.min(1, Math.abs(val));
+        bg = `rgba(37, 99, 235, ${0.15 + intensity * 0.75})`;
+      }
+
+      cell.style.backgroundColor = bg;
+      cell.textContent = val.toFixed(2);
+      cell.title = `${SENSOR_KEYS[i]} vs ${SENSOR_KEYS[j]}: r = ${val}`;
+      rowDiv.appendChild(cell);
+    }
+    container.appendChild(rowDiv);
+  }
+}
+
+// =============================================================================
+// UI UPDATE DISPATCHER
+// =============================================================================
+function updateUI() {
+  if (state.telemetryData.length === 0) return;
+
+  const latest = state.telemetryData[state.telemetryData.length - 1];
+
+  // 1. Update Numerical Values & Dial Gauges
+  document.getElementById("valVib").textContent = latest.vibration;
+  document.getElementById("valTemp").textContent = latest.temperature;
+  document.getElementById("valCurr").textContent = latest.current;
+  document.getElementById("valVolt").textContent = latest.voltage;
+  document.getElementById("valSpeed").textContent = latest.rotational_speed;
+
+  drawRadialGauge("gaugeVibration", latest.vibration, THRESHOLDS.vibration.min, THRESHOLDS.vibration.max, THRESHOLDS.vibration.warn, THRESHOLDS.vibration.crit, true);
+  drawRadialGauge("gaugeTemperature", latest.temperature, THRESHOLDS.temperature.min, THRESHOLDS.temperature.max, THRESHOLDS.temperature.warn, THRESHOLDS.temperature.crit, true);
+  drawRadialGauge("gaugeCurrent", latest.current, THRESHOLDS.current.min, THRESHOLDS.current.max, THRESHOLDS.current.warn, THRESHOLDS.current.crit, true);
+  drawRadialGauge("gaugeVoltage", latest.voltage, THRESHOLDS.voltage.min, THRESHOLDS.voltage.max, THRESHOLDS.voltage.warn, THRESHOLDS.voltage.crit, false);
+  drawRadialGauge("gaugeSpeed", latest.rotational_speed, THRESHOLDS.rotational_speed.min, THRESHOLDS.rotational_speed.max, THRESHOLDS.rotational_speed.warn, THRESHOLDS.rotational_speed.crit, false);
+
+  // 2. Update KPI Stats
+  const total = state.telemetryData.length;
+  const healthyCount = state.telemetryData.filter(r => r.health_status === "Healthy").length;
+  const warnCount = state.telemetryData.filter(r => r.health_status === "Warning").length;
+  const critCount = state.telemetryData.filter(r => r.health_status === "Critical").length;
+
+  document.getElementById("kpiTotal").textContent = total;
+  document.getElementById("kpiHealthy").textContent = healthyCount;
+  document.getElementById("kpiWarning").textContent = warnCount;
+  document.getElementById("kpiCritical").textContent = critCount;
+
+  document.getElementById("kpiHealthyPct").textContent = `${Math.round((healthyCount / total) * 100)}% optimal`;
+  document.getElementById("kpiWarningPct").textContent = `${Math.round((warnCount / total) * 100)}% advisory`;
+  document.getElementById("kpiCriticalPct").textContent = `${Math.round((critCount / total) * 100)}% critical`;
+
+  const badge = document.getElementById("latestStatusBadge");
+  badge.textContent = latest.health_status.toUpperCase();
+  badge.className = `badge-status badge-${latest.health_status.toLowerCase()}`;
+
+  const statusCard = document.getElementById("kpiStatusCard");
+  const borderColor = latest.health_status === "Healthy" ? "var(--status-healthy)" : (latest.health_status === "Warning" ? "var(--status-warning)" : "var(--status-critical)");
+  statusCard.style.borderLeftColor = borderColor;
+
+  document.getElementById("latestRiskScore").textContent = latest.risk_index;
+
+  const riskBadge = document.getElementById("riskLevelBadge");
+  if (latest.risk_index >= 65) {
+    riskBadge.textContent = "CRITICAL ACTION ZONE";
+    riskBadge.className = "badge-pill badge-critical";
+  } else if (latest.risk_index >= 30) {
+    riskBadge.textContent = "ADVISORY WARNING ZONE";
+    riskBadge.className = "badge-pill badge-warning";
+  } else {
+    riskBadge.textContent = "SAFE OPERATING ZONE";
+    riskBadge.className = "badge-pill badge-healthy";
+  }
+
+  // 3. Update Diagnostic Alert Banner
+  document.getElementById("diagTitle").textContent = `Subsystem Condition: ${latest.health_status}`;
+  document.getElementById("diagReason").textContent = latest.diagnosis_reason;
+  const diagIcon = document.getElementById("diagIcon");
+  diagIcon.textContent = latest.health_status === "Healthy" ? "🛡️" : (latest.health_status === "Warning" ? "⚠️" : "🚨");
+
+  // 4. Update Telemetry Charts
+  const recentSlice = state.telemetryData.slice(-60);
+  const labels = recentSlice.map(r => r.timestamp);
+
+  telemetryChartInstance.data.labels = labels;
+  telemetryChartInstance.data.datasets[0].data = recentSlice.map(r => r[state.activeSensor]);
+  telemetryChartInstance.data.datasets[0].label = `${state.activeSensor.replace('_', ' ').toUpperCase()} (${THRESHOLDS[state.activeSensor].unit})`;
+  telemetryChartInstance.update();
+
+  riskChartInstance.data.labels = labels;
+  riskChartInstance.data.datasets[0].data = recentSlice.map(r => r.risk_index);
+  riskChartInstance.update();
+
+  // 5. Update PCA Scatter & Correlation periodically
+  if (total % 10 === 0 || total <= 25) {
+    const matrix = computePearsonMatrix(state.telemetryData);
+    renderCorrelationHeatmap(matrix);
+
+    const pcaResult = computePCA2D(state.telemetryData.slice(-100));
+    const hPoints = pcaResult.coords.filter(p => p.status === "Healthy");
+    const wPoints = pcaResult.coords.filter(p => p.status === "Warning");
+    const cPoints = pcaResult.coords.filter(p => p.status === "Critical");
+
+    pcaChartInstance.data.datasets[0].data = hPoints;
+    pcaChartInstance.data.datasets[1].data = wPoints;
+    pcaChartInstance.data.datasets[2].data = cPoints;
+    pcaChartInstance.update();
+
+    document.getElementById("pcaVarianceStats").innerHTML = `
+      <span><b>PC1:</b> Explains ${pcaResult.variancePct[0]}% variance</span>
+      <span><b>PC2:</b> Explains ${pcaResult.variancePct[1]}% variance</span>
+      <span><b>Cumulative:</b> ${pcaResult.variancePct[0] + pcaResult.variancePct[1]}% 2D retention</span>
+    `;
+  }
+
+  // 6. Update Diagnostic Table
+  renderAuditTable();
+}
+
+// =============================================================================
+// AUDIT TABLE RENDERER
+// =============================================================================
+function renderAuditTable() {
+  const tbody = document.getElementById("auditTableBody");
+  if (!tbody) return;
+
+  const query = state.searchQuery.toLowerCase();
+  const filter = state.statusFilter;
+
+  // Show latest 40 matching rows (newest first)
+  const rows = [...state.telemetryData].reverse().filter(r => {
+    const matchesFilter = (filter === "ALL" || r.health_status === filter);
+    const matchesQuery = query === "" ||
+      r.timestamp.toLowerCase().includes(query) ||
+      r.diagnosis_reason.toLowerCase().includes(query) ||
+      r.health_status.toLowerCase().includes(query);
+    return matchesFilter && matchesQuery;
+  }).slice(0, 40);
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.timestamp}</td>
+      <td style="color: ${r.vibration >= 7.1 ? '#ef4444' : (r.vibration >= 4.5 ? '#f59e0b' : '#38bdf8')}">${r.vibration}</td>
+      <td style="color: ${r.temperature >= 90 ? '#ef4444' : (r.temperature >= 75 ? '#f59e0b' : '#f8fafc')}">${r.temperature}</td>
+      <td>${r.current}</td>
+      <td>${r.voltage}</td>
+      <td>${r.rotational_speed}</td>
+      <td>${r.is_anomaly ? '<span style="color: #ef4444; font-weight: 700;">⚠️ YES</span>' : '<span style="color: #10b981;">✓ NO</span>'}</td>
+      <td style="font-weight: 800; color: ${r.risk_index >= 65 ? '#ef4444' : (r.risk_index >= 30 ? '#f59e0b' : '#10b981')}">${r.risk_index}</td>
+      <td><span class="badge-status badge-${r.health_status.toLowerCase()}">${r.health_status.toUpperCase()}</span></td>
+      <td style="font-size: 0.75rem; color: #94a3b8;">${r.diagnosis_reason}</td>
+    </tr>
+  `).join("");
+}
+
+// =============================================================================
+// EXPORT ANALYZED CSV REPORT
+// =============================================================================
+function exportCsvReport() {
+  if (state.telemetryData.length === 0) return;
+
+  const headers = ["Index", "Timestamp", "Vibration_mms", "Temperature_C", "Current_A", "Voltage_V", "Rotational_Speed_RPM", "AI_Anomaly", "Risk_Index", "Health_Status", "Diagnosis_Reason"];
+  const csvRows = [headers.join(",")];
+
+  state.telemetryData.forEach(r => {
+    csvRows.push([
+      r.index,
+      `"${r.timestamp}"`,
+      r.vibration,
+      r.temperature,
+      r.current,
+      r.voltage,
+      r.rotational_speed,
+      r.is_anomaly,
+      r.risk_index,
+      `"${r.health_status}"`,
+      `"${r.diagnosis_reason.replace(/"/g, '""')}"`
+    ].join(","));
+  });
+
+  const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `induction_motor_telemetry_report_${Date.now()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// =============================================================================
+// APPLICATION LIFECYCLE & EVENT HANDLERS
+// =============================================================================
+function tick() {
+  const nextIdx = state.telemetryData.length + 1;
+  const newRow = generateObservation(nextIdx, state.activeFault);
+  state.telemetryData.push(newRow);
+
+  if (state.telemetryData.length > state.maxHistory) {
+    state.telemetryData.shift();
+  }
+
+  updateUI();
+}
+
+function initEventListeners() {
+  // Toggle Stream Button
+  const toggleBtn = document.getElementById("toggleStreamBtn");
+  toggleBtn.addEventListener("click", () => {
+    state.isRunning = !state.isRunning;
+    if (state.isRunning) {
+      document.getElementById("streamBtnIcon").textContent = "⏸";
+      document.getElementById("streamBtnText").textContent = "Pause";
+      document.getElementById("liveStatusText").textContent = "TELEMETRY STREAM: ACTIVE (1Hz)";
+      state.timerId = setInterval(tick, state.streamInterval);
+    } else {
+      document.getElementById("streamBtnIcon").textContent = "▶";
+      document.getElementById("streamBtnText").textContent = "Resume";
+      document.getElementById("liveStatusText").textContent = "TELEMETRY STREAM: PAUSED";
+      clearInterval(state.timerId);
+    }
+  });
+
+  // Fault Injection Dropdown
+  const faultBtn = document.getElementById("faultDropdownBtn");
+  const faultMenu = document.getElementById("faultMenu");
+
+  faultBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    faultMenu.classList.toggle("show");
+  });
+
+  document.addEventListener("click", () => {
+    faultMenu.classList.remove("show");
+  });
+
+  document.querySelectorAll(".dropdown-item").forEach(item => {
+    item.addEventListener("click", (e) => {
+      const fault = e.target.getAttribute("data-fault");
+      state.activeFault = fault;
+      faultMenu.classList.remove("show");
+
+      const label = e.target.textContent;
+      faultBtn.innerHTML = `<span>${label}</span> ▼`;
+    });
+  });
+
+  // Parameter Switcher Chips (Trend Chart)
+  document.querySelectorAll(".param-selector-chips .chip").forEach(chip => {
+    chip.addEventListener("click", (e) => {
+      document.querySelectorAll(".param-selector-chips .chip").forEach(c => c.classList.remove("active"));
+      e.target.classList.add("active");
+      state.activeSensor = e.target.getAttribute("data-sensor");
+      updateUI();
+    });
+  });
+
+  // Table status filter
+  document.getElementById("statusFilterSelect").addEventListener("change", (e) => {
+    state.statusFilter = e.target.value;
+    renderAuditTable();
+  });
+
+  // Table search input
+  document.getElementById("tableSearchInput").addEventListener("input", (e) => {
+    state.searchQuery = e.target.value;
+    renderAuditTable();
+  });
+
+  // CSV Export button
+  document.getElementById("downloadCsvBtn").addEventListener("click", exportCsvReport);
+}
+
+// Initial Bootstrap
+window.addEventListener("DOMContentLoaded", () => {
+  initCharts();
+  initEventListeners();
+
+  // Seed with initial 40 observations so the dashboard starts populated
+  for (let i = 1; i <= 40; i++) {
+    state.telemetryData.push(generateObservation(i, "normal"));
+  }
+
+  updateUI();
+
+  // Start real-time 1 Hz stream
+  state.timerId = setInterval(tick, state.streamInterval);
+});

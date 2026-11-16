@@ -1,205 +1,126 @@
-# ⚡ MotorGuard: Intelligent Predictive Maintenance System
-### Software-Based Induction Motor Condition-Monitoring & Fault Detection Prototype
+# ⚡ MotorGuard AI: Intelligent Predictive Maintenance Dashboard
+### Industrial Induction Motor Condition-Monitoring System (Dark Mode)
 
-[![Python Version](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Streamlit App](https://img.shields.io/badge/Streamlit-1.40+-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![GitHub Actions CI](https://img.shields.io/badge/GitHub%20Actions-Passing-10b981?logo=github-actions&logoColor=white)](#-automated-testing)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Deploy-10b981?logo=github&logoColor=white)](https://pages.github.com/)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](index.html)
+[![CSS3](https://img.shields.io/badge/CSS3-Dark%20Mode-1572B6?logo=css3&logoColor=white)](style.css)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?logo=javascript&logoColor=black)](app.js)
+[![Chart.js](https://img.shields.io/badge/Chart.js-4.4+-FF6384?logo=chart.js&logoColor=white)](https://www.chartjs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-An educational, industrial-grade software prototype demonstrating **real-time condition-monitoring, statistical analytics, dimensionality reduction, and unsupervised machine learning anomaly detection** for an electric induction motor.
+An industrial **Dark Mode** predictive maintenance web dashboard designed specifically for **GitHub Pages deployment**. It evaluates 5 induction motor parameters (**Vibration, Temperature, Current, Voltage, Speed**) using real-time canvas gauges, time-series telemetry charts, 5×5 Pearson correlation, PCA 2D projection, and unsupervised anomaly detection.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🌐 Live GitHub Pages Deployment (Zero Server Required!)
 
-### Option 1: Using NPM (Fast & Recommended)
+Because this dashboard is built with pure **HTML5, CSS3, and JavaScript (`index.html`, `style.css`, `app.js`)**, it runs **100% inside any browser** with zero backend server required!
+
+### How to Deploy on GitHub Pages:
+1. Push this repository to GitHub:
+   ```bash
+   git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/<YOUR_REPOSITORY_NAME>.git
+   git push -u origin main
+   ```
+2. On GitHub, go to your repository **Settings** → **Pages** (in the left sidebar).
+3. Under **Build and deployment** → **Source**, select **Deploy from a branch**.
+4. Set Branch to **`main`** and folder to **`/(root)`**, then click **Save**.
+5. Within 60 seconds, your site is live at:  
+   👉 **`https://<YOUR_GITHUB_USERNAME>.github.io/<YOUR_REPOSITORY_NAME>/`**
+
+*(An automated GitHub Actions workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) is also included for automatic deployment on every push!)*
+
+---
+
+## 🚀 Running Locally with NPM
+
 ```bash
 # 1. Install & configure
 npm install
 
-# 2. Launch the interactive development dashboard
+# 2. Start the Dark Mode local dev server (auto-opens in browser)
 npm run dev
 
-# 3. Run all unit tests
-npm test
-```
-
-### Option 2: Using Standard Python
-```bash
-# 1. Install dependencies
-pip install -r requirements.txt
-
-# 2. Launch Streamlit dashboard
-streamlit run app.py
-
 # 3. Run automated tests
-pytest -v
-```
-
-> **Access Dashboard:** Open your browser at **`http://localhost:8501`**
-
----
-
-## 🎨 UI Design System & Color Theory
-
-The user interface follows the **60-30-10 Color Theory Rule** to ensure high visual hierarchy, clean contrast, and an intuitive industrial dashboard feel:
-
-| Proportion | Color Palette | Hex Code | Purpose in UI |
-| :--- | :--- | :--- | :--- |
-| **60% Dominant Base** | Slate 50 / Pure White | `#f8fafc` / `#ffffff` | Clean background canvas and elevated card surfaces |
-| **30% Structural Secondary** | Deep Slate 900 / Cool Slate | `#0f172a` / `#1e293b` | Navigation headers, typography, and contrast elements |
-| **10% Accent (Brand)** | Electric Indigo / Royal Blue | `#2563eb` / `#38bdf8` | Action buttons, active navigation tabs, telemetry splines |
-| **Status: Healthy** | Emerald Green | `#10b981` (bg: `#ecfdf5`) | Optimal operating state, safe thresholds |
-| **Status: Warning** | Amber Gold | `#f59e0b` (bg: `#fffbeb`) | Advisory alerts, scheduled inspection flags |
-| **Status: Critical** | Crimson Rose | `#ef4444` (bg: `#fef2f2`) | Immediate danger, emergency trip threshold |
-
----
-
-## 📐 The 5 Sensor Parameters & Standards
-
-Monitored in accordance with standard **ISO 10816-3 (Mechanical Vibration Severity)** and Class B/F motor thermal insulation boundaries:
-
-| Parameter | Unit | Normal Zone 🟢 | Warning Zone 🟡 | Critical Zone 🔴 | Engineering Purpose |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Vibration** | mm/s | `< 4.5` | `4.5 – 7.1` | `> 7.1` | Bearing wear, mechanical looseness, rotor unbalance |
-| **Temperature** | °C | `< 75.0` | `75.0 – 90.0` | `> 90.0` | Thermal accumulation in stator windings |
-| **Current** | A | `< 15.0` | `15.0 – 20.0` | `> 20.0` | Phase current draw & electrical overload |
-| **Voltage** | V | `380 – 420` | `370 – 380` | `< 350` or `> 450` | Supply voltage stability (400V 3-phase nominal) |
-| **Speed** | RPM | `1450 – 1490` | `1420 – 1450` | `< 1370` | Shaft rotational speed & motor slip under load |
-
----
-
-## ⚙️ System Architecture
-
-```
-┌─────────────────────────────────┐
-│     C++17 Motor Simulator       │   (or Python Generator: scripts/generate_sample_data.py)
-│  Generates Synthetic Telemetry  │
-└────────────────┬────────────────┘
-                 │ (CSV Dataset)
-                 ▼
-┌─────────────────────────────────┐
-│       Python Data Pipeline      │
-│  - Data Validation & Cleaning   │
-│  - Z-Score Scaling: z=(x-μ)/σ   │
-└────────────────┬────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────┐
-│     Analytics & ML Engine       │
-│  - 5x5 Pearson Correlation      │
-│  - PCA & Eigenvalue Analysis    │
-│  - Isolation Forest Outlier ML  │
-│  - Composite 0-100 Risk Score   │
-└────────────────┬────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────┐
-│   Streamlit Web Dashboard       │
-│  - SCADA Radial Dial Gauges     │
-│  - Time-Series Spline Trends    │
-│  - Correlation Matrix Heatmap   │
-│  - PCA 2D Scatter Projection    │
-│  - Zero-pyarrow HTML Tables     │
-│  - Audit Log & CSV Export       │
-└─────────────────────────────────┘
-```
-
----
-
-## 🧪 Automated Testing
-
-The project includes an automated **Pytest** test suite covering all modules:
-```bash
 npm test
-# OR
-pytest -v
 ```
 
-```text
-tests/test_analytics.py::test_correlation_matrix PASSED                  [  8%]
-tests/test_analytics.py::test_pca_analysis PASSED                        [ 16%]
-tests/test_anomaly_detector.py::test_isolation_forest_predictions PASSED [ 25%]
-tests/test_anomaly_detector.py::test_unfitted_detector_raises PASSED     [ 33%]
-tests/test_data_loader.py::test_sample_data_generation PASSED            [ 41%]
-tests/test_data_loader.py::test_data_validation_valid PASSED             [ 50%]
-tests/test_data_loader.py::test_data_validation_missing_and_corrupt PASSED [ 58%]
-tests/test_data_loader.py::test_standardization PASSED                   [ 66%]
-tests/test_data_loader.py::test_summary_statistics PASSED                [ 75%]
-tests/test_health_index.py::test_evaluate_sensor_rules_healthy PASSED    [ 83%]
-tests/test_health_index.py::test_evaluate_sensor_rules_critical PASSED   [ 91%]
-tests/test_health_index.py::test_compute_risk_index_and_status PASSED    [100%]
-
-============================= 12 passed in 2.08s ==============================
-```
+> **Local URL:** **`http://localhost:3000`**
 
 ---
 
-## ☁️ How to Deploy on GitHub & Run Live on the Web
+## 🎨 UI & Dark Mode Color Theory
 
-### Step 1: Push This Project to GitHub
-1. Create a new repository on **[github.com/new](https://github.com/new)** (e.g. `Intelegent_predictive_maintenance`).
-2. Run these two commands in your terminal:
-   ```bash
-   git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/Intelegent_predictive_maintenance.git
-   git push -u origin main
-   ```
+Built strictly according to the **60-30-10 Color Theory Rule** for industrial SCADA control room ergonomics:
 
-### Step 2: Make It Live on the Web (Free via Streamlit Cloud directly from GitHub)
-1. Go to **[share.streamlit.io](https://share.streamlit.io/)** and sign in with your GitHub account.
-2. Click **"New App"**.
-3. Select your repository: `<YOUR_GITHUB_USERNAME>/Intelegent_predictive_maintenance`.
-4. Set Main file path: **`app.py`**.
-5. Click **"Deploy!"** — It reads directly from your GitHub repository and puts your app live on the internet!
+| Ratio | Tone | Hex Code | Visual Application |
+| :--- | :--- | :--- | :--- |
+| **60% Dominant Base** | Deep Space Pitch Black | `#080c14` | Ultra-dark eye-comfort background |
+| **30% Structure** | Elevated Dark Slate | `#111a2e` / `#16223d` | Elevated card surfaces, borders, and sticky headers |
+| **10% Cyber Accents** | Electric Cyan & Indigo | `#38bdf8` / `#6366f1` | Action buttons, telemetry splines, dial pointers |
+| **🟢 Healthy State** | Cyber Emerald | `#10b981` | Optimal operational envelope (ISO 10816 Zone A/B) |
+| **🟡 Warning State** | Electric Amber | `#f59e0b` | Advisory alerts, scheduled maintenance trigger |
+| **🔴 Critical State** | Neon Crimson | `#ef4444` | Emergency trip limit, bearing failure, overload |
 
 ---
 
-## 📁 Exact File Structure for GitHub
+## 🎛️ Interactive Features
 
+1. **5 SCADA Radial Dial Instruments:** Custom HTML5 Canvas gauges showing live needles sweeping across ISO 10816-3 threshold arcs.
+2. **Interactive Fault Injection:** Dropdown on top bar allowing you to simulate:
+   - 🟢 *Normal Baseline*
+   - 🔴 *Bearing Damage* (High Vibration surge)
+   - 🟡 *Thermal Overheating* (Stator coil heat runaway)
+   - 🔴 *Electrical Overload* (Voltage dip with high surge current)
+3. **Live 1Hz Telemetry Timeline:** Chart.js streaming chart with multi-sensor toggle chips.
+4. **5×5 Pearson Cross-Correlation Grid:** Color-coded coefficient heatmap (-1.0 to +1.0) with interactive tooltip tooltips.
+5. **PCA 2D Cluster Scatter Plot:** JavaScript matrix engine calculating covariance, eigenvalues, eigenvectors, and projecting readings onto PC1 vs PC2.
+6. **Diagnostic Audit Table:** Real-time log with search bar and filter dropdown.
+7. **Instant CSV Report:** One-click **"Export CSV"** button generating downloadable telemetry reports on the fly.
+
+---
+
+## 📁 Repository Structure
 ```
 Intelegent_predictive_maintenance/
 ├── .github/
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md        # Issue tracking template
-│   │   └── feature_request.md   # Feature tracking template
 │   ├── workflows/
-│   │   └── ci.yml               # GitHub Actions automated CI testing workflow
-│   └── pull_request_template.md # PR review checklist
-├── .streamlit/
-│   └── config.toml              # Streamlit theme & cloud server settings
+│   │   ├── ci.yml               # Automated test pipeline
+│   │   └── pages.yml            # Automatic GitHub Pages deployment workflow
+│   ├── ISSUE_TEMPLATE/
+│   └── pull_request_template.md
 ├── cpp_simulator/
-│   ├── simulator.cpp            # C++17 motor sensor data generator
-│   └── README.md                # C++ compilation instructions
+│   ├── simulator.cpp            # C++17 motor sensor generator
+│   └── README.md
 ├── data/
-│   └── motor_sensors.csv        # Preloaded demonstration sensor telemetry
+│   └── motor_sensors.csv        # Preloaded sample dataset
 ├── scripts/
-│   ├── dev.js                   # Node launcher for 'npm run dev'
-│   ├── test.js                  # Node runner for 'npm test'
-│   └── generate_sample_data.py  # Python sensor generation script
+│   ├── serve.js                 # Local static HTTP dev server for 'npm run dev'
+│   ├── test.js                  # Test runner for 'npm test'
+│   └── generate_sample_data.py  # Python sensor generation utility
 ├── src/
-│   ├── __init__.py
-│   ├── data_loader.py           # Ingestion, validation & Z-score scaling
-│   ├── analytics.py             # Correlation matrix, PCA & Eigenvalues
-│   ├── anomaly_detector.py      # Isolation Forest unsupervised ML model
-│   └── health_index.py          # Industrial rule engine & composite Risk Index
+│   ├── data_loader.py           # Python data cleaning & Z-score scaling
+│   ├── analytics.py             # Python correlation & PCA
+│   ├── anomaly_detector.py      # Python Isolation Forest model
+│   └── health_index.py          # Python ISO rules & 0-100 Risk Index
 ├── tests/
-│   ├── __init__.py
 │   ├── test_data_loader.py
 │   ├── test_analytics.py
 │   ├── test_anomaly_detector.py
 │   └── test_health_index.py
-├── .gitignore                   # Production Git ignore rules
-├── app.py                       # Main Streamlit dashboard application
+├── .gitignore                   # Production Git ignore
+├── app.js                       # ⚡ Client-side JavaScript AI & Math Engine
+├── app.py                       # Python Streamlit alternative application
+├── index.html                   # 🌐 Main GitHub Pages Entrypoint
 ├── LICENSE                      # MIT Open Source License
 ├── package.json                 # NPM scripts (npm install, npm run dev, npm test)
 ├── README.md                    # Complete GitHub documentation
-├── requirements.txt             # Verified Python dependencies
-├── run_dashboard.bat            # 1-click Windows launcher
-└── run_tests.bat                # 1-click Windows test runner
+├── requirements.txt             # Python dependencies
+├── run_dashboard.bat            # Windows 1-click launcher
+└── style.css                    # 🎨 High-Tech Industrial Dark Mode Stylesheet
 ```
 
 ---
 
 ## 📄 License
-This project is open-source and released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE).

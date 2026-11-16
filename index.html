@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MotorGuard AI | Intelligent Induction Motor Predictive Maintenance</title>
+  <meta name="description" content="Industrial Induction Motor Condition-Monitoring & Predictive Maintenance Dashboard (Dark Mode). Ready for GitHub Pages deployment.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+  <!-- TOP INDUSTRIAL NAVIGATION BAR -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-logo">
+        <span class="brand-icon">⚡</span>
+        <div>
+          <h1 class="brand-name">MotorGuard<span class="brand-accent">.AI</span></h1>
+          <p class="brand-tagline">Induction Motor Predictive Maintenance System</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="system-status-pill">
+        <span class="status-pulse"></span>
+        <span id="liveStatusText">TELEMETRY STREAM: ACTIVE (1Hz)</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="header-controls">
+        <button id="toggleStreamBtn" class="btn btn-secondary">
+          <span id="streamBtnIcon">⏸</span> <span id="streamBtnText">Pause</span>
+        </button>
+        <div class="dropdown-faults">
+          <button class="btn btn-primary" id="faultDropdownBtn">
+            <span>⚠️ Inject Fault</span> ▼
+          </button>
+          <div class="dropdown-menu" id="faultMenu">
+            <button class="dropdown-item" data-fault="normal">🟢 Normal Baseline</button>
+            <button class="dropdown-item" data-fault="bearing">🔴 Bearing Damage (High Vibration)</button>
+            <button class="dropdown-item" data-fault="thermal">🟡 Thermal Overheating (95°C)</button>
+            <button class="dropdown-item" data-fault="electrical">🔴 Electrical Overload (Voltage Dip / Surge Current)</button>
+          </div>
+        </div>
+        <button id="downloadCsvBtn" class="btn btn-accent">
+          <span>📥 Export CSV</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN DASHBOARD CONTENT -->
+  <main class="dashboard-container">
+    
+    <!-- TOP STATUS KPI METRIC CARDS -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Readings</div>
+        <div class="kpi-value" id="kpiTotal">0</div>
+        <div class="kpi-subtext"><span class="indicator-cyan">●</span> Continuous telemetry</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Healthy Baseline</div>
+        <div class="kpi-value kpi-green" id="kpiHealthy">0</div>
+        <div class="kpi-subtext" id="kpiHealthyPct">0% within safe limits</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Advisory Warnings</div>
+        <div class="kpi-value kpi-amber" id="kpiWarning">0</div>
+        <div class="kpi-subtext" id="kpiWarningPct">0% require inspection</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Critical Faults</div>
+        <div class="kpi-value kpi-red" id="kpiCritical">0</div>
+        <div class="kpi-subtext" id="kpiCriticalPct">0% emergency trips</div>
+      </div>
+
+      <div class="kpi-card kpi-card-status" id="kpiStatusCard">
+        <div class="kpi-label">Current Motor Health</div>
+        <div class="kpi-value-status">
+          <span class="badge-status badge-healthy" id="latestStatusBadge">HEALTHY</span>
+        </div>
+        <div class="kpi-subtext">Composite Risk: <b id="latestRiskScore">0</b>/100</div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: SCADA RADIAL DIAL INSTRUMENTS -->
+    <section class="dashboard-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">🧭 Real-Time SCADA Dial Instruments</h2>
+          <p class="panel-subtitle">Live physical parameter dials calibrated to standard ISO 10816-3 & thermal insulation limits</p>
+        </div>
+        <div class="legend-pills">
+          <span class="pill-dot dot-green"></span> Normal
+          <span class="pill-dot dot-amber"></span> Warning
+          <span class="pill-dot dot-red"></span> Critical
+        </div>
+      </div>
+
+      <div class="gauges-grid">
+        <!-- Gauge 1: Vibration -->
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">Vibration</span>
+            <span class="gauge-std">ISO 10816-3</span>
+          </div>
+          <div class="gauge-canvas-box">
+            <canvas id="gaugeVibration" width="200" height="130"></canvas>
+            <div class="gauge-value-display">
+              <span id="valVib" class="gauge-number">2.1</span>
+              <span class="gauge-unit">mm/s</span>
+            </div>
+          </div>
+          <div class="gauge-limits">🟢 &lt;4.5 | 🟡 4.5–7.1 | 🔴 &gt;7.1</div>
+        </div>
+
+        <!-- Gauge 2: Temperature -->
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">Temperature</span>
+            <span class="gauge-std">Class B/F Rise</span>
+          </div>
+          <div class="gauge-canvas-box">
+            <canvas id="gaugeTemperature" width="200" height="130"></canvas>
+            <div class="gauge-value-display">
+              <span id="valTemp" class="gauge-number">52.4</span>
+              <span class="gauge-unit">°C</span>
+            </div>
+          </div>
+          <div class="gauge-limits">🟢 &lt;75 | 🟡 75–90 | 🔴 &gt;90</div>
+        </div>
+
+        <!-- Gauge 3: Current -->
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">Phase Current</span>
+            <span class="gauge-std">Full Load Amp</span>
+          </div>
+          <div class="gauge-canvas-box">
+            <canvas id="gaugeCurrent" width="200" height="130"></canvas>
+            <div class="gauge-value-display">
+              <span id="valCurr" class="gauge-number">9.8</span>
+              <span class="gauge-unit">A</span>
+            </div>
+          </div>
+          <div class="gauge-limits">🟢 &lt;15 | 🟡 15–20 | 🔴 &gt;20</div>
+        </div>
+
+        <!-- Gauge 4: Voltage -->
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">Line Voltage</span>
+            <span class="gauge-std">400V Nominal</span>
+          </div>
+          <div class="gauge-canvas-box">
+            <canvas id="gaugeVoltage" width="200" height="130"></canvas>
+            <div class="gauge-value-display">
+              <span id="valVolt" class="gauge-number">399.5</span>
+              <span class="gauge-unit">V</span>
+            </div>
+          </div>
+          <div class="gauge-limits">🟢 380–420 | 🟡 370–380 | 🔴 &lt;350</div>
+        </div>
+
+        <!-- Gauge 5: Speed -->
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">Rotor Speed</span>
+            <span class="gauge-std">4-Pole 50Hz</span>
+          </div>
+          <div class="gauge-canvas-box">
+            <canvas id="gaugeSpeed" width="200" height="130"></canvas>
+            <div class="gauge-value-display">
+              <span id="valSpeed" class="gauge-number">1475</span>
+              <span class="gauge-unit">RPM</span>
+            </div>
+          </div>
+          <div class="gauge-limits">🟢 1450–1490 | 🟡 1420–1450 | 🔴 &lt;1370</div>
+        </div>
+      </div>
+
+      <!-- Real-time Diagnostic Alert Banner -->
+      <div class="diagnostic-banner" id="diagnosticBanner">
+        <div class="diag-icon" id="diagIcon">🛡️</div>
+        <div class="diag-content">
+          <div class="diag-title" id="diagTitle">Subsystem Condition: Healthy</div>
+          <div class="diag-reason" id="diagReason">All physical sensor telemetry within optimal baseline operating envelope.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: TELEMETRY CHARTS -->
+    <section class="two-col-grid">
+      <!-- Left: Time Series Sensor Trajectory -->
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">📈 Dynamic Telemetry Timeline</h2>
+            <p class="panel-subtitle">Streaming sensor observations over time</p>
+          </div>
+          <div class="param-selector-chips">
+            <button class="chip active" data-sensor="vibration">Vibration</button>
+            <button class="chip" data-sensor="temperature">Temp</button>
+            <button class="chip" data-sensor="current">Current</button>
+            <button class="chip" data-sensor="voltage">Voltage</button>
+            <button class="chip" data-sensor="rotational_speed">RPM</button>
+          </div>
+        </div>
+        <div class="chart-box">
+          <canvas id="telemetryChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Right: Risk Index & Health Distribution -->
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">🛡️ Composite Risk Index (0–100)</h2>
+            <p class="panel-subtitle">Combined AI Anomaly Score & ISO limits</p>
+          </div>
+          <span class="badge-pill badge-healthy" id="riskLevelBadge">SAFE ZONE</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="riskChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: ML ANALYTICS (PCA & CORRELATION) -->
+    <section class="two-col-grid">
+      <!-- Left: PCA 2D Scatter Plot -->
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">🎯 PCA 2D Projection (PC1 vs PC2)</h2>
+            <p class="panel-subtitle">Principal Component Analysis clustered by operating health</p>
+          </div>
+          <span class="badge-pill badge-primary">EIGEN-DECOMPOSITION</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="pcaChart"></canvas>
+        </div>
+        <div class="pca-variance-stats" id="pcaVarianceStats">
+          <span><b>PC1:</b> Explains 68.4% variance</span>
+          <span><b>PC2:</b> Explains 18.2% variance</span>
+          <span><b>Total:</b> 86.6% 2D retention</span>
+        </div>
+      </div>
+
+      <!-- Right: Pearson Correlation Matrix -->
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">🔗 Pearson Correlation Heatmap</h2>
+            <p class="panel-subtitle">Quantified linear inter-dependencies (-1.0 to +1.0)</p>
+          </div>
+          <span class="badge-pill badge-primary">5 × 5 MATRIX</span>
+        </div>
+        <div class="heatmap-container" id="heatmapContainer">
+          <!-- Dynamically populated by app.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: TELEMETRY AUDIT TABLE -->
+    <section class="dashboard-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">📋 Telemetry Audit Log & Diagnosis</h2>
+          <p class="panel-subtitle">Searchable real-time records with automated health classifications</p>
+        </div>
+        <div class="table-controls">
+          <select id="statusFilterSelect" class="select-input">
+            <option value="ALL">All Health States</option>
+            <option value="Healthy">Healthy Only</option>
+            <option value="Warning">Warning Only</option>
+            <option value="Critical">Critical Only</option>
+          </select>
+          <input type="text" id="tableSearchInput" placeholder="Search telemetry..." class="search-input">
+        </div>
+      </div>
+
+      <div class="table-scroll-wrapper">
+        <table class="audit-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Vibration (mm/s)</th>
+              <th>Temp (°C)</th>
+              <th>Current (A)</th>
+              <th>Voltage (V)</th>
+              <th>Speed (RPM)</th>
+              <th>AI Anomaly</th>
+              <th>Risk Score</th>
+              <th>Health Status</th>
+              <th>Diagnosis Reason</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody">
+            <!-- Dynamically populated by app.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <div>
+        <b>MotorGuard AI</b> &bull; B.Tech First Year Project Prototype &bull; Induction Motor Condition-Monitoring
+      </div>
+      <div>
+        Built with Pure HTML5, CSS3, & Modern JavaScript &bull; Hosted on GitHub Pages
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Application JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
